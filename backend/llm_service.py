@@ -44,7 +44,15 @@ def analyze(record: EmailRecord) -> AnalyzedEmail:
     raw = response.choices[0].message.content.strip()
     raw = re.sub(r"^```json\s*|^```\s*|```$", "", raw, flags=re.MULTILINE).strip()
 
-    result = json.loads(raw)
+    try:
+        result = json.loads(raw)
+    except json.JSONDecodeError:
+        return AnalyzedEmail(
+            **record.model_dump(),
+            category="Others",
+            tab="NEEDS_REVIEW",
+            extracted_deadline=None,
+        )
     return AnalyzedEmail(
         **record.model_dump(),
         category=result["category"],
