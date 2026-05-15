@@ -12,7 +12,7 @@ const TABS = [
 const TAB_COLORS = {
   FILTERED:     '#3b82f6',
   NEEDS_REVIEW: '#f59e0b',
-  DONE:         '#22c55e',
+  DONE:         '#5d8a6d',
   MISSED:       '#ef4444',
   NO_DEADLINE:  '#6b7280',
 }
@@ -87,7 +87,11 @@ export default function App() {
     setError(null)
     try {
       const result = await uploadEml(file)
-      setUploadMsg(`Imported "${result.subject}" → ${result.tab.replace('_', ' ')}`)
+      setUploadMsg(
+        result.is_duplicate
+          ? `Already imported: "${result.email.subject}"`
+          : `Imported "${result.email.subject}" → ${result.email.tab.replace('_', ' ')}`
+      )
       await load(activeTab)
     } catch (e) {
       setError(e.message)

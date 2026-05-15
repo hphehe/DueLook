@@ -35,6 +35,14 @@ def upsert(conn, email: AnalyzedEmail) -> None:
         )
 
 
+def find_by_id(conn, email_id: str) -> Optional[AnalyzedEmail]:
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM email_state WHERE email_id = %s", (email_id,))
+        cols = [d[0] for d in cur.description]
+        row = cur.fetchone()
+        return _to_model(dict(zip(cols, row))) if row else None
+
+
 def get_all(conn, tab: Optional[str]) -> list[AnalyzedEmail]:
     with conn.cursor() as cur:
         if tab:

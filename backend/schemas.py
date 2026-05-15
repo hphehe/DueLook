@@ -15,3 +15,8 @@ class AnalyzedEmail(EmailRecord):
     category: str
     tab: str
     extracted_deadline: Optional[str] = None
+
+
+class ImportResult(BaseModel):
+    email: AnalyzedEmail
+    is_duplicate: bool

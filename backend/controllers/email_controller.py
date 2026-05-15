@@ -2,13 +2,13 @@ from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
-from schemas import AnalyzedEmail
+from schemas import ImportResult
 from services import email_service
 
 router = APIRouter(prefix="/emails")
 
 
-@router.post("/import", response_model=AnalyzedEmail)
+@router.post("/import", response_model=ImportResult)
 async def import_email(file: UploadFile = File(...)):
     if not (file.filename or "").endswith(".eml"):
         raise HTTPException(status_code=400, detail="Only .eml files are supported")
