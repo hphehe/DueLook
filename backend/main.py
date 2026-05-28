@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from controllers.email_controller import router as email_router
 
-@app.get("/") 
-def read_root():
-    return {"status": "DueLook API is running! Greetings from Batam!"}
+app = FastAPI()
+app.include_router(email_router)
+
+
+@app.get("/")
+def health():
+    return {"status": "ok"}
