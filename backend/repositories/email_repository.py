@@ -11,18 +11,19 @@ def _parse_dt(date_str: str):
         return None
 
 
-def upsert(conn, email: AnalyzedEmail) -> None:
+def upsert(conn, email: AnalyzedEmail, user_id: str, record_id: str) -> None:
     with conn.cursor() as cur:
         cur.execute(
             """
             INSERT INTO email_state
-                (email_id, sender, subject, received_date, body,
+                (email_id, user_id, sender, subject, received_date, body,
                  source_file, category, tab, extracted_deadline)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (email_id) DO NOTHING
             """,
             (
-                email.email_id,
+                record_id,
+                user_id,
                 email.sender,
                 email.subject,
                 _parse_dt(email.received_date),
@@ -35,23 +36,37 @@ def upsert(conn, email: AnalyzedEmail) -> None:
         )
 
 
-def find_by_id(conn, email_id: str) -> Optional[AnalyzedEmail]:
+def find_by_id(conn, email_id: str, user_id: str) -> Optional[AnalyzedEmail]:
     with conn.cursor() as cur:
-        cur.execute("SELECT * FROM email_state WHERE email_id = %s", (email_id,))
+        cur.execute(
+            "SELECT * FROM email_state WHERE email_id = %s AND user_id = %s",
+            (email_id, user_id),
+        )
         cols = [d[0] for d in cur.description]
         row = cur.fetchone()
         return _to_model(dict(zip(cols, row))) if row else None
 
 
-def get_all(conn, tab: Optional[str]) -> list[AnalyzedEmail]:
+def get_all(conn, tab: Optional[str], user_id: str) -> list[AnalyzedEmail]:
     with conn.cursor() as cur:
         if tab:
             cur.execute(
-                "SELECT * FROM email_state WHERE tab = %s ORDER BY processed_at DESC",
-                (tab,),
+                """
+                SELECT * FROM email_state
+                WHERE tab = %s AND user_id = %s
+                ORDER BY processed_at DESC
+                """,
+                (tab, user_id),
             )
         else:
-            cur.execute("SELECT * FROM email_state ORDER BY processed_at DESC")
+            cur.execute(
+                """
+                SELECT * FROM email_state
+                WHERE user_id = %s
+                ORDER BY processed_at DESC
+                """,
+                (user_id,),
+            )
         cols = [d[0] for d in cur.description]
         return [_to_model(dict(zip(cols, row))) for row in cur.fetchall()]
 
