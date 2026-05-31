@@ -1,4 +1,4 @@
-# DueLook 🔍
+# DueLook
 *Let us look for what's due.*
 
 **National University of Singapore — Orbital 2026**
