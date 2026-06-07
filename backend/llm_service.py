@@ -17,11 +17,20 @@ Analyze this email and return ONLY valid JSON with this exact structure:
   "extracted_deadline": "<ISO 8601 datetime string or null>"
 }}
 
-Rules:
-- tab=FILTERED if there is a clear, specific, actionable deadline and you are confident
-- tab=NEEDS_REVIEW if there seems to be a deadline but the date is ambiguous or unclear
-- tab=NO_DEADLINE for newsletters, announcements, or emails requiring no action
-- extracted_deadline must be null for NO_DEADLINE emails
+Tab rules:
+- tab=FILTERED: exactly one clear, actionable deadline date can be determined.
+  - If no specific time is stated, use 23:59 on that date. Never invent a time.
+  - Equivalent phrasings count as one deadline: "by end of 15 Apr" and "before 16 Apr" both mean 15 Apr 23:59.
+- tab=NEEDS_REVIEW if any of these apply:
+  - A task is required but no specific date is mentioned (e.g. "please submit your report").
+  - The time is vague and cannot be pinned to a specific hour (e.g. "before evening", "sometime this week").
+  - Two or more different deadline dates are mentioned for the same required action.
+- tab=NO_DEADLINE: newsletters, announcements, or emails requiring no action from the student.
+
+Deadline rules:
+- extracted_deadline must be null for NEEDS_REVIEW and NO_DEADLINE.
+- Never invent a time that is not stated or clearly inferable — use 23:59 when only a date is given.
+- Multiple time references in one email do not automatically mean NEEDS_REVIEW — only flag if they represent genuinely conflicting deadlines for the same required action.
 
 Email:
 From: {sender}

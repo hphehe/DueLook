@@ -62,13 +62,126 @@ def get_all(conn, tab: Optional[str], user_id: str) -> list[AnalyzedEmail]:
             cur.execute(
                 """
                 SELECT * FROM email_state
-                WHERE user_id = %s
+                WHERE user_id = %s AND tab != 'BIN'
                 ORDER BY processed_at DESC
                 """,
                 (user_id,),
             )
         cols = [d[0] for d in cur.description]
         return [_to_model(dict(zip(cols, row))) for row in cur.fetchall()]
+
+
+def set_tab(conn, email_id: str, new_tab: str, user_id: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state SET tab = %s
+            WHERE email_id = %s AND user_id = %s AND tab != 'BIN'
+            RETURNING email_id
+            """,
+            (new_tab, email_id, user_id),
+        )
+        return cur.fetchone() is not None
+
+
+def delete_email(conn, email_id: str, user_id: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state
+            SET pre_delete_tab = tab, tab = 'BIN'
+            WHERE email_id = %s AND user_id = %s AND tab != 'BIN'
+            RETURNING email_id
+            """,
+            (email_id, user_id),
+        )
+        return cur.fetchone() is not None
+
+
+def set_deadline(conn, email_id: str, new_deadline: Optional[str], user_id: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state
+            SET extracted_deadline = %s,
+                tab = CASE
+                  WHEN tab = 'MISSED' AND %s::timestamptz > NOW() THEN 'FILTERED'
+                  ELSE tab
+                END
+            WHERE email_id = %s AND user_id = %s AND tab != 'BIN'
+            RETURNING email_id
+            """,
+            (new_deadline, new_deadline, email_id, user_id),
+        )
+        return cur.fetchone() is not None
+
+
+def recover_email(conn, email_id: str, user_id: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state
+            SET tab = COALESCE(pre_delete_tab, 'NEEDS_REVIEW'), pre_delete_tab = NULL
+            WHERE email_id = %s AND user_id = %s AND tab = 'BIN'
+            RETURNING email_id
+            """,
+            (email_id, user_id),
+        )
+        return cur.fetchone() is not None
+
+
+def confirm(conn, email_id: str, user_id: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state SET tab = 'FILTERED'
+            WHERE email_id = %s AND user_id = %s AND tab = 'NEEDS_REVIEW'
+            RETURNING email_id
+            """,
+            (email_id, user_id),
+        )
+        return cur.fetchone() is not None
+
+
+def dismiss(conn, email_id: str, user_id: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state SET tab = 'NO_DEADLINE'
+            WHERE email_id = %s AND user_id = %s AND tab = 'NEEDS_REVIEW'
+            RETURNING email_id
+            """,
+            (email_id, user_id),
+        )
+        return cur.fetchone() is not None
+
+
+def mark_missed(conn, user_id: str) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state
+            SET tab = 'MISSED'
+            WHERE user_id = %s
+              AND tab = 'FILTERED'
+              AND extracted_deadline IS NOT NULL
+              AND extracted_deadline < NOW()
+            """,
+            (user_id,),
+        )
+
+
+def mark_done(conn, email_id: str, user_id: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state SET tab = 'DONE'
+            WHERE email_id = %s AND user_id = %s AND tab != 'DONE'
+            RETURNING email_id
+            """,
+            (email_id, user_id),
+        )
+        return cur.fetchone() is not None
 
 
 def _to_model(row: dict) -> AnalyzedEmail:

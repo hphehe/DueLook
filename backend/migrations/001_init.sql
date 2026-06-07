@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS email_state (
     category           TEXT NOT NULL,
     tab                TEXT NOT NULL,
     extracted_deadline TIMESTAMPTZ,
+    pre_delete_tab     TEXT,
     processed_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
