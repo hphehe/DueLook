@@ -99,8 +99,8 @@ export default function App() {
   // Load emails when the tab changes or once a user session is established.
   useEffect(() => { if (user) load(activeTab) }, [activeTab, user])
 
-  // confirmed deadlines only: extracted_deadline present and tab === 'FILTERED'
-  const confirmedEmails = emails.filter(e => e.extracted_deadline && e.tab === 'FILTERED')
+  // Show any email that has a deadline set, including manually added deadlines on NO_DEADLINE items (bug fixed pls check).
+  const deadlineEmails = emails.filter(e => e.extracted_deadline && e.tab !== 'BIN')
 
   const handleMarkDone = async (emailId) => {
     setError(null)
@@ -295,11 +295,11 @@ export default function App() {
       ) : (
         <div>
           <Calendar
-            emails={confirmedEmails}
+            emails={deadlineEmails}
             onDateClick={(date) => {
               setSelectedDate(date)
               const key = format(date, 'yyyy-MM-dd')
-              const matched = confirmedEmails.filter(e => {
+              const matched = deadlineEmails.filter(e => {
                 if (!e.extracted_deadline) return false
                 try {
                   const d = parseISO(e.extracted_deadline)
