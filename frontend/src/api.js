@@ -1,4 +1,11 @@
 const TOKEN_KEY = 'duelook_token'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+
+function apiUrl(path) {
+  const base = API_BASE_URL.replace(/\/$/, '')
+  if (!path.startsWith('/')) path = `/${path}`
+  return `${base}${path}`
+}
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY)
@@ -25,14 +32,8 @@ async function readJson(res) {
   return res.json().catch(() => ({}))
 }
 
-/** 
-Authenticated request. On 401 (session expired/invalid mid-use) clear the
-token and reload so the app bounces back to the login screen. Boot-time
-session restore uses fetchCurrentUser below, which throws instead of
-reloading so App can show the login form without a reload flash.
-**/
 async function authed(path, options = {}) {
-  const res = await fetch(path, { ...options, headers: authHeaders(options.headers) })
+  const res = await fetch(apiUrl(path), { ...options, headers: authHeaders(options.headers) })
   if (res.status === 401) {
     clearToken()
     window.location.reload()
@@ -56,9 +57,9 @@ async function authedVoid(path, options = {}) {
   }
 }
 
-// ── Auth (unauthenticated) ──
+// ── Auth ──
 async function authRequest(path, email, password) {
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -77,7 +78,7 @@ export function login(email, password) {
 }
 
 export async function fetchCurrentUser() {
-  const res = await fetch('/auth/me', { headers: authHeaders() })
+  const res = await fetch(apiUrl('/auth/me'), { headers: authHeaders() })
   const data = await readJson(res)
   if (!res.ok) throw new Error(data.detail || 'Failed to load user')
   return data
