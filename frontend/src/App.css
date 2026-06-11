@@ -551,3 +551,24 @@ body {
     justify-content: space-between;
   }
 }
+
+/* Calendar styles */
+.calendar { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.6rem; margin-bottom: 1rem }
+.calendar-header { display:flex; align-items:center; justify-content:space-between; padding: 0 0.4rem 0.6rem }
+.cal-title { font-weight: 700 }
+.cal-btn { background: transparent; border: none; font-size: 1.1rem; cursor: pointer }
+.cal-grid { display: flex; flex-direction: column; gap: 0.25rem }
+.cal-row { display: flex }
+.cal-cell { flex: 1; padding: 0.5rem; min-height: 56px; border-radius: 6px; position: relative; cursor: pointer }
+.cal-cell.muted { opacity: 0.4 }
+.cal-weekday { font-size: 0.75rem; color: #64748b; text-align: center }
+.cal-day { font-size: 0.85rem; font-weight: 600 }
+.cal-day.today { color: #2563eb }
+.cal-badge { position: absolute; right: 6px; bottom: 6px; background: #ef4444; color: #fff; font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 999px }
+
+/* Simple modal backdrop used by DateListModal */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index: 300 }
+.date-email-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding: 0 }
+.date-email-item { padding: 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff }
+.date-email-subject { font-weight: 600; cursor: pointer }
+.date-email-meta { font-size: 0.82rem; color: #64748b }

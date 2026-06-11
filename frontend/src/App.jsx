@@ -20,6 +20,9 @@ import EmailCard from './components/EmailCard'
 import ContextMenu from './components/ContextMenu'
 import DeadlineModal from './components/DeadlineModal'
 import EmailDetailModal from './components/EmailDetailModal'
+import Calendar from './components/Calendar'
+import DateListModal from './components/DateListModal'
+import { format, parseISO } from 'date-fns'
 
 export default function App() {
   const [user, setUser]                   = useState(null)
@@ -34,6 +37,8 @@ export default function App() {
   const [menu, setMenu]                   = useState(null)
   const [deadlineModal, setDeadlineModal] = useState(null)
   const [deadlineValue, setDeadlineValue] = useState('')
+  const [selectedDate, setSelectedDate] = useState(null)
+  const [dateModalEmails, setDateModalEmails] = useState([])
   const fileRef = useRef()
 
   // Restore a session from a stored token on first load.
@@ -93,6 +98,9 @@ export default function App() {
 
   // Load emails when the tab changes or once a user session is established.
   useEffect(() => { if (user) load(activeTab) }, [activeTab, user])
+
+  // confirmed deadlines only: extracted_deadline present and tab === 'FILTERED'
+  const confirmedEmails = emails.filter(e => e.extracted_deadline && e.tab === 'FILTERED')
 
   const handleMarkDone = async (emailId) => {
     setError(null)
@@ -164,7 +172,23 @@ export default function App() {
 
   const handleSaveDeadline = async () => {
     const email = deadlineModal.email
-    const deadline = deadlineValue || null
+    // Convert `datetime-local` (YYYY-MM-DDTHH:MM) in local time to an ISO instant (UTC)
+    let deadline = null
+    if (deadlineValue) {
+      try {
+        const [datePart, timePart] = deadlineValue.split('T')
+        if (datePart && timePart) {
+          const [y, m, d] = datePart.split('-').map(Number)
+          const [hh, mm] = timePart.split(':').map(Number)
+          const dt = new Date(y, m - 1, d, hh, mm)
+          deadline = dt.toISOString()
+        } else {
+          deadline = deadlineValue
+        }
+      } catch (err) {
+        deadline = deadlineValue
+      }
+    }
     setDeadlineModal(null)
     setError(null)
     try {
@@ -269,20 +293,41 @@ export default function App() {
       ) : emails.length === 0 ? (
         <div className="empty">No emails here yet. Import a .eml file to get started.</div>
       ) : (
-        <ul className="email-list">
-          {emails.map(e => (
-            <EmailCard
-              key={e.email_id}
-              email={e}
-              onClick={() => setSelectedEmail(e)}
-              onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
-              onMarkDone={() => handleMarkDone(e.email_id)}
-              onConfirm={() => handleConfirm(e.email_id)}
-              onDismiss={() => handleDismiss(e.email_id)}
-              onRecover={() => handleRecover(e.email_id)}
-            />
-          ))}
-        </ul>
+        <div>
+          <Calendar
+            emails={confirmedEmails}
+            onDateClick={(date) => {
+              setSelectedDate(date)
+              const key = format(date, 'yyyy-MM-dd')
+              const matched = confirmedEmails.filter(e => {
+                if (!e.extracted_deadline) return false
+                try {
+                  const d = parseISO(e.extracted_deadline)
+                  const ek = format(d, 'yyyy-MM-dd')
+                  return ek === key
+                } catch (err) {
+                  return (e.extracted_deadline || '').startsWith(key)
+                }
+              })
+              setDateModalEmails(matched)
+            }}
+          />
+
+          <ul className="email-list">
+            {emails.map(e => (
+              <EmailCard
+                key={e.email_id}
+                email={e}
+                onClick={() => setSelectedEmail(e)}
+                onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
+                onMarkDone={() => handleMarkDone(e.email_id)}
+                onConfirm={() => handleConfirm(e.email_id)}
+                onDismiss={() => handleDismiss(e.email_id)}
+                onRecover={() => handleRecover(e.email_id)}
+              />
+            ))}
+          </ul>
+        </div>
       )}
 
       {menu && (
@@ -303,6 +348,14 @@ export default function App() {
           onClose={() => setDeadlineModal(null)}
         />
       )}
+
+      <DateListModal
+        open={!!selectedDate}
+        date={selectedDate}
+        emails={dateModalEmails}
+        onClose={() => { setSelectedDate(null); setDateModalEmails([]) }}
+        onEmailClick={(e) => { setSelectedEmail(e); setSelectedDate(null) }}
+      />
 
       {selectedEmail && (
         <EmailDetailModal
