@@ -34,7 +34,7 @@ export default function AuthForm({ onAuthSuccess }) {
         <p className="eyebrow">DueLook</p>
         <h1>Sign in to your inbox workspace</h1>
         <p className="subtitle">
-          Use fake accounts for now to verify login, isolation, and per-user email imports.
+          Mock accounts for now to verify login, isolation, and per-user email imports. 
         </p>
       </div>
 

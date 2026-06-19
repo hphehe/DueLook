@@ -75,11 +75,13 @@ def set_tab(conn, email_id: str, new_tab: str, user_id: str) -> bool:
     with conn.cursor() as cur:
         cur.execute(
             """
-            UPDATE email_state SET tab = %s
+            UPDATE email_state
+            SET tab = %s,
+                extracted_deadline = CASE WHEN %s = 'NO_DEADLINE' THEN NULL ELSE extracted_deadline END
             WHERE email_id = %s AND user_id = %s AND tab != 'BIN'
             RETURNING email_id
             """,
-            (new_tab, email_id, user_id),
+            (new_tab, new_tab, email_id, user_id),
         )
         return cur.fetchone() is not None
 
@@ -105,13 +107,14 @@ def set_deadline(conn, email_id: str, new_deadline: Optional[str], user_id: str)
             UPDATE email_state
             SET extracted_deadline = %s,
                 tab = CASE
-                  WHEN tab = 'MISSED' AND %s::timestamptz > NOW() THEN 'FILTERED'
+                  WHEN tab IN ('MISSED', 'NO_DEADLINE', 'NEEDS_REVIEW') AND %s IS NOT NULL THEN
+                    CASE WHEN %s::timestamptz > NOW() THEN 'FILTERED' ELSE 'MISSED' END
                   ELSE tab
                 END
             WHERE email_id = %s AND user_id = %s AND tab != 'BIN'
             RETURNING email_id
             """,
-            (new_deadline, new_deadline, email_id, user_id),
+            (new_deadline, new_deadline, new_deadline, email_id, user_id),
         )
         return cur.fetchone() is not None
 
