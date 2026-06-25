@@ -29,6 +29,7 @@ export default function App() {
   const [booting, setBooting]             = useState(true)
   const [activeTab, setActiveTab]         = useState(null)
   const [emails, setEmails]               = useState([])
+  const [allEmails, setAllEmails]         = useState([])
   const [loading, setLoading]             = useState(true)
   const [uploading, setUploading]         = useState(false)
   const [error, setError]                 = useState(null)
@@ -96,17 +97,33 @@ export default function App() {
     }
   }
 
-  // Load emails when the tab changes or once a user session is established.
-  useEffect(() => { if (user) load(activeTab) }, [activeTab, user])
+  // The calendar reflects ALL deadlines, independent of the active tab. fetchEmails(null)
+  // returns every non-BIN email, so this loads once per session and refreshes only after a
+  // mutation — never on a tab switch, so the calendar stays put as you change folders.
+  const loadAll = async () => {
+    try {
+      setAllEmails(await fetchEmails(null))
+    } catch (e) {
+      setError(e.message)
+    }
+  }
 
-  // Show any email that has a deadline set, including manually added deadlines on NO_DEADLINE items (bug fixed pls check).
-  const deadlineEmails = emails.filter(e => e.extracted_deadline && e.tab !== 'BIN')
+  // Refresh both the tab list and the calendar after a mutation.
+  const reload = () => Promise.all([load(activeTab), loadAll()])
+
+  // List re-fetches on tab change or once a session is established.
+  useEffect(() => { if (user) load(activeTab) }, [activeTab, user])
+  // Calendar data loads once per session, NOT on tab change.
+  useEffect(() => { if (user) loadAll() }, [user])
+
+  // Every non-BIN email that carries a deadline, drawn from the tab-independent set.
+  const deadlineEmails = allEmails.filter(e => e.extracted_deadline && e.tab !== 'BIN')
 
   const handleMarkDone = async (emailId) => {
     setError(null)
     try {
       await markDoneApi(emailId)
-      await load(activeTab)
+      await reload()
     } catch (e) {
       setError(e.message)
     }
@@ -116,7 +133,7 @@ export default function App() {
     setError(null)
     try {
       await confirmApi(emailId)
-      await load(activeTab)
+      await reload()
     } catch (e) {
       setError(e.message)
     }
@@ -126,7 +143,7 @@ export default function App() {
     setError(null)
     try {
       await dismissApi(emailId)
-      await load(activeTab)
+      await reload()
     } catch (e) {
       setError(e.message)
     }
@@ -137,7 +154,7 @@ export default function App() {
     setError(null)
     try {
       await setTabApi(emailId, tab)
-      await load(activeTab)
+      await reload()
     } catch (e) {
       setError(e.message)
     }
@@ -148,7 +165,7 @@ export default function App() {
     setError(null)
     try {
       await deleteEmailApi(emailId)
-      await load(activeTab)
+      await reload()
     } catch (e) {
       setError(e.message)
     }
@@ -158,7 +175,7 @@ export default function App() {
     setError(null)
     try {
       await recoverEmailApi(emailId)
-      await load(activeTab)
+      await reload()
     } catch (e) {
       setError(e.message)
     }
@@ -193,7 +210,7 @@ export default function App() {
     setError(null)
     try {
       await setDeadlineApi(email.email_id, deadline)
-      await load(activeTab)
+      await reload()
     } catch (e) {
       setError(e.message)
     }
@@ -226,7 +243,7 @@ export default function App() {
           ? `Already imported: "${result.email.subject}"`
           : `Imported "${result.email.subject}" → ${result.email.tab.replace('_', ' ')}`
       )
-      await load(activeTab)
+      await reload()
     } catch (e) {
       setError(e.message)
     } finally {
@@ -239,6 +256,7 @@ export default function App() {
     clearToken()
     setUser(null)
     setEmails([])
+    setAllEmails([])
     setActiveTab(null)
     setError(null)
     setUploadMsg(null)
@@ -288,46 +306,46 @@ export default function App() {
       {uploadMsg && <div className="banner success">{uploadMsg}</div>}
       {error     && <div className="banner error">{error}</div>}
 
+      {allEmails.length > 0 && (
+        <Calendar
+          emails={deadlineEmails}
+          onDateClick={(date) => {
+            setSelectedDate(date)
+            const key = format(date, 'yyyy-MM-dd')
+            const matched = deadlineEmails.filter(e => {
+              if (!e.extracted_deadline) return false
+              try {
+                const d = parseISO(e.extracted_deadline)
+                const ek = format(d, 'yyyy-MM-dd')
+                return ek === key
+              } catch (err) {
+                return (e.extracted_deadline || '').startsWith(key)
+              }
+            })
+            setDateModalEmails(matched)
+          }}
+        />
+      )}
+
       {loading ? (
         <div className="empty">Loading…</div>
       ) : emails.length === 0 ? (
         <div className="empty">No emails here yet. Import a .eml file to get started.</div>
       ) : (
-        <div>
-          <Calendar
-            emails={deadlineEmails}
-            onDateClick={(date) => {
-              setSelectedDate(date)
-              const key = format(date, 'yyyy-MM-dd')
-              const matched = deadlineEmails.filter(e => {
-                if (!e.extracted_deadline) return false
-                try {
-                  const d = parseISO(e.extracted_deadline)
-                  const ek = format(d, 'yyyy-MM-dd')
-                  return ek === key
-                } catch (err) {
-                  return (e.extracted_deadline || '').startsWith(key)
-                }
-              })
-              setDateModalEmails(matched)
-            }}
-          />
-
-          <ul className="email-list">
-            {emails.map(e => (
-              <EmailCard
-                key={e.email_id}
-                email={e}
-                onClick={() => setSelectedEmail(e)}
-                onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
-                onMarkDone={() => handleMarkDone(e.email_id)}
-                onConfirm={() => handleConfirm(e.email_id)}
-                onDismiss={() => handleDismiss(e.email_id)}
-                onRecover={() => handleRecover(e.email_id)}
-              />
-            ))}
-          </ul>
-        </div>
+        <ul className="email-list">
+          {emails.map(e => (
+            <EmailCard
+              key={e.email_id}
+              email={e}
+              onClick={() => setSelectedEmail(e)}
+              onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
+              onMarkDone={() => handleMarkDone(e.email_id)}
+              onConfirm={() => handleConfirm(e.email_id)}
+              onDismiss={() => handleDismiss(e.email_id)}
+              onRecover={() => handleRecover(e.email_id)}
+            />
+          ))}
+        </ul>
       )}
 
       {menu && (
