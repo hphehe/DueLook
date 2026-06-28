@@ -41,12 +41,16 @@ def _initialize_schema():
                     category TEXT NOT NULL,
                     tab TEXT NOT NULL,
                     extracted_deadline TIMESTAMPTZ,
+                    pre_delete_tab TEXT,
                     processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 );
                 """
             )
             cur.execute(
                 "ALTER TABLE email_state ADD COLUMN IF NOT EXISTS user_id TEXT"
+            )
+            cur.execute(
+                "ALTER TABLE email_state ADD COLUMN IF NOT EXISTS pre_delete_tab TEXT"
             )
         conn.commit()
     except Exception:

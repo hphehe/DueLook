@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import { login, register, saveToken } from '../lib/api'
+import { login, register, saveToken } from '../api'
 
 export default function AuthForm({ onAuthSuccess }) {
   const [mode, setMode] = useState('login')
@@ -34,7 +34,7 @@ export default function AuthForm({ onAuthSuccess }) {
         <p className="eyebrow">DueLook</p>
         <h1>Sign in to your inbox workspace</h1>
         <p className="subtitle">
-          Use fake accounts for now to verify login, isolation, and per-user email imports.
+          Mock accounts for now to verify login, isolation, and per-user email imports. 
         </p>
       </div>
 

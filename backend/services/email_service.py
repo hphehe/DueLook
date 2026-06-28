@@ -22,4 +22,59 @@ def import_email(file_bytes: bytes, filename: str, user_id: str) -> ImportResult
 
 def list_emails(tab: Optional[str], user_id: str) -> list[AnalyzedEmail]:
     with get_db() as conn:
+        email_repository.mark_missed(conn, user_id)
         return email_repository.get_all(conn, tab, user_id)
+
+
+def mark_done(email_id: str, user_id: str) -> None:
+    with get_db() as conn:
+        found = email_repository.mark_done(conn, email_id, user_id)
+    if not found:
+        raise ValueError(f"Email {email_id} not found or already done")
+
+
+def confirm(email_id: str, user_id: str) -> None:
+    with get_db() as conn:
+        found = email_repository.confirm(conn, email_id, user_id)
+    if not found:
+        raise ValueError(f"Email {email_id} not found or not in NEEDS_REVIEW")
+
+
+def dismiss(email_id: str, user_id: str) -> None:
+    with get_db() as conn:
+        found = email_repository.dismiss(conn, email_id, user_id)
+    if not found:
+        raise ValueError(f"Email {email_id} not found or not in NEEDS_REVIEW")
+
+
+_VALID_TABS = {'FILTERED', 'NEEDS_REVIEW', 'NO_DEADLINE', 'DONE', 'MISSED'}
+
+
+def set_tab(email_id: str, new_tab: str, user_id: str) -> None:
+    if new_tab not in _VALID_TABS:
+        raise ValueError(f"Invalid tab: {new_tab}")
+    with get_db() as conn:
+        found = email_repository.set_tab(conn, email_id, new_tab, user_id)
+    if not found:
+        raise ValueError(f"Email {email_id} not found")
+
+
+def delete_email(email_id: str, user_id: str) -> None:
+    with get_db() as conn:
+        found = email_repository.delete_email(conn, email_id, user_id)
+    if not found:
+        raise ValueError(f"Email {email_id} not found or already in bin")
+
+
+def recover_email(email_id: str, user_id: str) -> None:
+    with get_db() as conn:
+        found = email_repository.recover_email(conn, email_id, user_id)
+    if not found:
+        raise ValueError(f"Email {email_id} not found in bin")
+
+
+def set_deadline(email_id: str, new_deadline: Optional[str], user_id: str) -> None:
+    with get_db() as conn:
+        found = email_repository.set_deadline(conn, email_id, new_deadline, user_id)
+    if not found:
+        raise ValueError(f"Email {email_id} not found or in bin")

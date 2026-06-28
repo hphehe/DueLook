@@ -22,6 +22,14 @@ class ImportResult(BaseModel):
     is_duplicate: bool
 
 
+class SetTabRequest(BaseModel):
+    tab: str
+
+
+class SetDeadlineRequest(BaseModel):
+    deadline: Optional[str] = None
+
+
 class RegisterRequest(BaseModel):
     email: str
     password: str
