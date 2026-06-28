@@ -67,10 +67,22 @@ _initialize_schema()
 def get_db():
     conn = _pool.getconn()
     try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+    except psycopg2.OperationalError:
+        _pool.putconn(conn, close=True)
+        conn = _pool.getconn()
+
+    healthy = True
+    try:
         yield conn
         conn.commit()
     except Exception:
-        conn.rollback()
+        healthy = False
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         raise
     finally:
-        _pool.putconn(conn)
+        _pool.putconn(conn, close=not healthy)
