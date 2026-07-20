@@ -3,9 +3,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Security, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from schemas import AnalyzedEmail, ImportResult, SetDeadlineRequest, SetTabRequest
-from services import auth_service
-from services import email_service
+from schemas import AnalyzedEmail, ImportResult, SetDeadlineRequest, SetTabRequest, SyncResult
+from services import auth_service, email_service, gmail_service
 
 router = APIRouter(prefix="/emails")
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -89,3 +88,11 @@ def set_deadline(email_id: str, body: SetDeadlineRequest, current_user=Depends(_
         email_service.set_deadline(email_id, body.deadline, current_user.user_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/sync-gmail", response_model=SyncResult)
+def sync_gmail(current_user=Depends(_current_user)):
+    try:
+        return gmail_service.sync(current_user.user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

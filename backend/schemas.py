@@ -49,3 +49,8 @@ class AuthToken(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserProfile
+
+
+class SyncResult(BaseModel):
+    imported: int
+    skipped: int

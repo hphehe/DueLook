@@ -432,7 +432,7 @@ body {
 .tab-btn.bin-tab:hover { background: #ef4444; color: #fff; }
 .tab-btn.bin-tab.active { background: #ef4444; border-color: #ef4444; color: #fff; }
 
-/* ── Context menu ── */
+/* Context menu */
 .ctx-menu {
   position: fixed;
   background: #fff;
@@ -476,7 +476,7 @@ body {
 .ctx-delete { color: #ef4444; }
 .ctx-delete:hover { background: #fee2e2; color: #ef4444; }
 
-/* ── Deadline modal ── */
+/* Deadline modal */
 .deadline-modal { gap: 0.9rem; }
 
 .deadline-preview {
@@ -539,6 +539,73 @@ body {
   border: 1.5px solid #3b82f6;
 }
 .deadline-save:hover { background: #2563eb; border-color: #2563eb; }
+
+/* Google auth button */
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  margin-top: 0.5rem;
+}
+
+.google-btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Auth divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0.25rem;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* Toolbar actions */
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Sync Gmail button */
+.sync-btn {
+  padding: 0.4rem 1rem;
+  background: #fff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.sync-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; }
+.sync-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 @media (max-width: 720px) {
   .header,
