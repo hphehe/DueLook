@@ -565,6 +565,14 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* Gmail recommendation */
+.gmail-rec {
+  font-size: 0.78rem;
+  color: #64748b;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
 /* Auth divider */
 .auth-divider {
   display: flex;

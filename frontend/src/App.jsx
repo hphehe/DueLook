@@ -357,6 +357,7 @@ export default function App() {
         onFileChange={handleFileChange}
         syncing={syncing}
         onSyncGmail={handleSyncGmail}
+        hasGmail={user?.has_gmail ?? false}
       />
 
       {uploadMsg && <div className="banner success">{uploadMsg}</div>}

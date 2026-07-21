@@ -43,6 +43,7 @@ class LoginRequest(BaseModel):
 class UserProfile(BaseModel):
     user_id: str
     email: str
+    has_gmail: bool = False
 
 
 class AuthToken(BaseModel):

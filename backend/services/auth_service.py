@@ -160,4 +160,4 @@ def get_current_user(token: str):
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         if expires_at < datetime.now(timezone.utc):
             raise ValueError("Invalid or expired session")
-        return UserProfile(user_id=session["user_id"], email=session["email"])
+        return UserProfile(user_id=session["user_id"], email=session["email"], has_gmail=session.get("has_gmail", False))

@@ -121,7 +121,7 @@ def find_session(conn, token: str):
 	with conn.cursor() as cur:
 		cur.execute(
 			"""
-			SELECT s.user_id, u.email, s.expires_at
+			SELECT s.user_id, u.email, s.expires_at, u.google_refresh_token IS NOT NULL AS has_gmail
 			FROM auth_sessions s
 			JOIN users u ON u.user_id = s.user_id
 			WHERE s.token = %s
@@ -131,4 +131,4 @@ def find_session(conn, token: str):
 		row = cur.fetchone()
 		if not row:
 			return None
-		return {"user_id": row[0], "email": row[1], "expires_at": row[2]}
+		return {"user_id": row[0], "email": row[1], "expires_at": row[2], "has_gmail": row[3]}
