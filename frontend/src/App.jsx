@@ -45,6 +45,14 @@ export default function App() {
   const [dateModalEmails, setDateModalEmails] = useState([])
   const fileRef = useRef()
 
+  //Auto-sync on login and every 15 minutes while logged in
+  useEffect(() => {
+    if (!user) return
+    silentSync()
+    const interval = setInterval(silentSync, 15 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [user?.user_id])
+
   //Restore a session from a stored token on first load.
   //Handles the Google OAuth callback: token and auth_error arrive as URL params.
   useEffect(() => {
@@ -256,6 +264,21 @@ export default function App() {
       if (result.imported > 0) await reload()
     } catch (e) {
       setError(e.message)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const silentSync = async () => {
+    setSyncing(true)
+    try {
+      const result = await syncGmail()
+      if (result.imported > 0) {
+        setUploadMsg(`Auto-synced ${result.imported} new email${result.imported !== 1 ? 's' : ''} from Gmail.`)
+        await reload()
+      }
+    } catch {
+      // Silently ignore — user may not have Google connected
     } finally {
       setSyncing(false)
     }

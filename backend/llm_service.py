@@ -62,9 +62,12 @@ def analyze(record: EmailRecord) -> AnalyzedEmail:
             tab="NEEDS_REVIEW",
             extracted_deadline=None,
         )
+    deadline = result.get("extracted_deadline")
+    if not deadline or deadline == "null":
+        deadline = None
     return AnalyzedEmail(
         **record.model_dump(),
         category=result["category"],
         tab=result["tab"],
-        extracted_deadline=result.get("extracted_deadline"),
+        extracted_deadline=deadline,
     )

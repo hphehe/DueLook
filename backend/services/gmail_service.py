@@ -1,4 +1,5 @@
 import base64
+import html
 import os
 import re
 
@@ -28,10 +29,10 @@ def _extract_text(payload: dict) -> str:
     if mime == "text/html":
         data = payload.get("body", {}).get("data", "")
         if data:
-            html = base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="replace")
-            html = re.sub(r"<(style|script|head)[^>]*>.*?</(style|script|head)>", " ", html, flags=re.DOTALL | re.IGNORECASE)
-            text = re.sub(r"<[^>]+>", " ", html)
-            return re.sub(r"\s+", " ", text).strip()
+            raw = base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="replace")
+            raw = re.sub(r"<(style|script|head)[^>]*>.*?</(style|script|head)>", " ", raw, flags=re.DOTALL | re.IGNORECASE)
+            text = re.sub(r"<[^>]+>", " ", raw)
+            return re.sub(r"\s+", " ", html.unescape(text)).strip()
     return ""
 
 
@@ -55,13 +56,13 @@ def sync(user_id: str) -> SyncResult:
     result = service.users().messages().list(
         userId="me",
         labelIds=["INBOX"],
-        q="category:primary is:unread newer_than:30d",
+        q="category:primary newer_than:30d",
         maxResults=10,
     ).execute()
     messages = result.get("messages", [])
 
-    imported = 0
     skipped = 0
+    to_analyze: list[tuple[str, EmailRecord]] = []
 
     for msg_ref in messages:
         msg_id = msg_ref["id"]
@@ -77,21 +78,21 @@ def sync(user_id: str) -> SyncResult:
         hdrs = {h["name"]: h["value"] for h in payload.get("headers", [])}
         body = _extract_text(payload) or "(no body)"
 
-        record = EmailRecord(
+        to_analyze.append((record_id, EmailRecord(
             email_id=msg_id,
             sender=hdrs.get("From", "Unknown"),
             subject=hdrs.get("Subject", "(No Subject)"),
             received_date=hdrs.get("Date", ""),
             body=body[:3000],
             source_file=f"gmail:{msg_id}",
-        )
+        )))
 
+    imported = 0
+    for record_id, record in to_analyze:
         analyzed = analyze(record)
         analyzed.email_id = record_id
-
         with get_db() as conn:
             email_repository.upsert(conn, analyzed, user_id, record_id)
-
         imported += 1
 
     return SyncResult(imported=imported, skipped=skipped)
