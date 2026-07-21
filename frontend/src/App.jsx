@@ -145,6 +145,8 @@ export default function App() {
     try {
       await markDoneApi(emailId)
       await reload()
+      setMenu(null)
+      setSelectedEmail(null)
     } catch (e) {
       setError(e.message)
     }
@@ -176,6 +178,7 @@ export default function App() {
     try {
       await setTabApi(emailId, tab)
       await reload()
+      setSelectedEmail(null)
     } catch (e) {
       setError(e.message)
     }
@@ -187,6 +190,7 @@ export default function App() {
     try {
       await deleteEmailApi(emailId)
       await reload()
+      setSelectedEmail(null)
     } catch (e) {
       setError(e.message)
     }
@@ -204,6 +208,7 @@ export default function App() {
 
   const handleOpenDeadline = (email) => {
     setMenu(null)
+    setSelectedEmail(null)
     setDeadlineValue(toDateTimeLocal(email.extracted_deadline))
     setDeadlineModal({ email })
   }
@@ -436,6 +441,10 @@ export default function App() {
         <EmailDetailModal
           email={selectedEmail}
           onClose={() => setSelectedEmail(null)}
+          onContextMenu={ev => selectedEmail.tab !== 'BIN'
+            ? handleContextMenu(ev, selectedEmail)
+            : ev.preventDefault()}
+          onMarkDone={() => handleMarkDone(selectedEmail.email_id)}
         />
       )}
     </div>

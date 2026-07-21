@@ -1,10 +1,10 @@
 import { TAB_COLORS } from '../constants'
 import { formatDate } from '../utils'
 
-export default function EmailDetailModal({ email, onClose }) {
+export default function EmailDetailModal({ email, onClose, onContextMenu, onMarkDone }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" onClick={e => e.stopPropagation()} onContextMenu={onContextMenu}>
         <button className="modal-close" onClick={onClose}>✕</button>
         <div className="modal-header">
           <span
@@ -24,6 +24,13 @@ export default function EmailDetailModal({ email, onClose }) {
           )}
         </div>
         <pre className="modal-body">{email.body}</pre>
+        {email.tab === 'FILTERED' && (
+          <div className="modal-actions">
+            <button type="button" className="done-btn" onClick={onMarkDone}>
+              Mark Done
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -425,6 +425,18 @@ body {
   margin: 0;
 }
 
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.modal-actions .done-btn {
+  min-height: 2.25rem;
+  padding: 0.45rem 1rem;
+}
+
 .card { cursor: pointer; }
 
 /* ── Bin tab ── */
