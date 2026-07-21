@@ -12,6 +12,8 @@ import {
   fetchCurrentUser,
   hasToken,
   clearToken,
+  saveToken,
+  syncGmail,
 } from './api'
 import { toDateTimeLocal } from './utils'
 import AuthForm from './components/AuthForm'
@@ -32,6 +34,7 @@ export default function App() {
   const [allEmails, setAllEmails]         = useState([])
   const [loading, setLoading]             = useState(true)
   const [uploading, setUploading]         = useState(false)
+  const [syncing, setSyncing]             = useState(false)
   const [error, setError]                 = useState(null)
   const [uploadMsg, setUploadMsg]         = useState(null)
   const [selectedEmail, setSelectedEmail] = useState(null)
@@ -42,9 +45,27 @@ export default function App() {
   const [dateModalEmails, setDateModalEmails] = useState([])
   const fileRef = useRef()
 
-  // Restore a session from a stored token on first load.
+  //Auto-sync on login and every 15 minutes while logged in
+  useEffect(() => {
+    if (!user) return
+    silentSync()
+    const interval = setInterval(silentSync, 15 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [user?.user_id])
+
+  //Restore a session from a stored token on first load.
+  //Handles the Google OAuth callback: token and auth_error arrive as URL params.
   useEffect(() => {
     const boot = async () => {
+      const params = new URLSearchParams(window.location.search)
+      const oauthToken = params.get('token')
+      const authError = params.get('auth_error')
+      if (oauthToken || authError) {
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+      if (oauthToken) saveToken(oauthToken)
+      if (authError) setError(decodeURIComponent(authError))
+
       if (hasToken()) {
         try {
           setUser(await fetchCurrentUser())
@@ -108,12 +129,12 @@ export default function App() {
     }
   }
 
-  // Refresh both the tab list and the calendar after a mutation.
+  //Refresh both the tab list and the calendar after a mutation.
   const reload = () => Promise.all([load(activeTab), loadAll()])
 
-  // List re-fetches on tab change or once a session is established.
+  //List re-fetches on tab change or once a session is established.
   useEffect(() => { if (user) load(activeTab) }, [activeTab, user])
-  // Calendar data loads once per session, NOT on tab change.
+  //Calendar data loads once per session, NOT on tab change.
   useEffect(() => { if (user) loadAll() }, [user])
 
   // Every non-BIN email that carries a deadline, drawn from the tab-independent set.
@@ -230,6 +251,39 @@ export default function App() {
     setUploadMsg(null)
   }
 
+  const handleSyncGmail = async () => {
+    setSyncing(true)
+    setUploadMsg(null)
+    setError(null)
+    try {
+      const result = await syncGmail()
+      setUploadMsg(
+        `Synced ${result.imported} new email${result.imported !== 1 ? 's' : ''} from Gmail` +
+        (result.skipped ? ` (${result.skipped} already imported)` : '') + '.'
+      )
+      if (result.imported > 0) await reload()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const silentSync = async () => {
+    setSyncing(true)
+    try {
+      const result = await syncGmail()
+      if (result.imported > 0) {
+        setUploadMsg(`Auto-synced ${result.imported} new email${result.imported !== 1 ? 's' : ''} from Gmail.`)
+        await reload()
+      }
+    } catch {
+      // Silently ignore — user may not have Google connected
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -301,6 +355,9 @@ export default function App() {
         uploading={uploading}
         fileRef={fileRef}
         onFileChange={handleFileChange}
+        syncing={syncing}
+        onSyncGmail={handleSyncGmail}
+        hasGmail={user?.has_gmail ?? false}
       />
 
       {uploadMsg && <div className="banner success">{uploadMsg}</div>}

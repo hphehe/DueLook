@@ -52,6 +52,24 @@ def _initialize_schema():
             cur.execute(
                 "ALTER TABLE email_state ADD COLUMN IF NOT EXISTS pre_delete_tab TEXT"
             )
+            cur.execute(
+                "ALTER TABLE users ALTER COLUMN password_salt DROP NOT NULL"
+            )
+            cur.execute(
+                "ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL"
+            )
+            cur.execute(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT"
+            )
+            cur.execute(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_refresh_token TEXT"
+            )
+            cur.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id
+                ON users(google_id) WHERE google_id IS NOT NULL
+                """
+            )
         conn.commit()
     except Exception:
         conn.rollback()

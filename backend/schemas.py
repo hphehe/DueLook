@@ -43,9 +43,15 @@ class LoginRequest(BaseModel):
 class UserProfile(BaseModel):
     user_id: str
     email: str
+    has_gmail: bool = False
 
 
 class AuthToken(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserProfile
+
+
+class SyncResult(BaseModel):
+    imported: int
+    skipped: int

@@ -131,3 +131,11 @@ export async function uploadEml(file) {
   form.append('file', file)
   return authedJson('/emails/import', { method: 'POST', body: form })
 }
+
+export function googleAuthUrl() {
+  return apiUrl('/auth/google')
+}
+
+export function syncGmail() {
+  return authedJson('/emails/sync-gmail', { method: 'POST' })
+}

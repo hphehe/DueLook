@@ -1,6 +1,6 @@
 import { TABS } from '../constants'
 
-export default function Toolbar({ activeTab, onTabClick, uploading, fileRef, onFileChange }) {
+export default function Toolbar({ activeTab, onTabClick, uploading, fileRef, onFileChange, syncing, onSyncGmail, hasGmail }) {
   return (
     <div className="toolbar">
       <div className="tabs">
@@ -19,20 +19,27 @@ export default function Toolbar({ activeTab, onTabClick, uploading, fileRef, onF
           </button>
         ))}
       </div>
-      <button
-        className="upload-btn"
-        onClick={() => fileRef.current.click()}
-        disabled={uploading}
-      >
-        {uploading ? 'Importing…' : '+ Import .eml'}
-      </button>
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".eml"
-        style={{ display: 'none' }}
-        onChange={onFileChange}
-      />
+      <div className="toolbar-actions">
+        {hasGmail && (
+          <button className="sync-btn" onClick={onSyncGmail} disabled={syncing}>
+            {syncing ? 'Syncing…' : '↻ Sync Gmail'}
+          </button>
+        )}
+        <button
+          className="upload-btn"
+          onClick={() => fileRef.current.click()}
+          disabled={uploading}
+        >
+          {uploading ? 'Importing…' : '+ Import .eml'}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".eml"
+          style={{ display: 'none' }}
+          onChange={onFileChange}
+        />
+      </div>
     </div>
   )
 }

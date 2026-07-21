@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Security
+import os
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Security
+from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from schemas import AuthToken, LoginRequest, RegisterRequest, UserProfile
@@ -38,3 +41,24 @@ def me(token: str = Depends(_token_from_scheme)):
         return auth_service.get_current_user(token)
     except ValueError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+
+@router.get("/google")
+def google_login():
+    try:
+        return RedirectResponse(auth_service.google_oauth_url())
+    except Exception:
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+        return RedirectResponse(f"{frontend_url}?auth_error=Configuration+error")
+
+
+@router.get("/google/callback")
+def google_callback(code: str = Query(...), state: str = Query("")):
+    import traceback
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    try:
+        token_data = auth_service.google_oauth_callback(code, state)
+        return RedirectResponse(f"{frontend_url}?token={token_data.access_token}")
+    except Exception:
+        traceback.print_exc()
+        return RedirectResponse(f"{frontend_url}?auth_error=Google+sign-in+failed")
