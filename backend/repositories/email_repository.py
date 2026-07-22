@@ -16,9 +16,9 @@ def upsert(conn, email: AnalyzedEmail, user_id: str, record_id: str) -> None:
         cur.execute(
             """
             INSERT INTO email_state
-                (email_id, user_id, sender, subject, received_date, body,
+                (email_id, user_id, sender, subject, received_date, body, body_html,
                  source_file, category, tab, extracted_deadline)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (email_id) DO NOTHING
             """,
             (
@@ -28,12 +28,33 @@ def upsert(conn, email: AnalyzedEmail, user_id: str, record_id: str) -> None:
                 email.subject,
                 _parse_dt(email.received_date),
                 email.body,
+                email.body_html,
                 email.source_file,
                 email.category,
                 email.tab,
                 email.extracted_deadline,
             ),
         )
+
+
+def update_content(
+    conn,
+    email_id: str,
+    user_id: str,
+    body: str,
+    body_html: Optional[str],
+) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state
+            SET body = %s, body_html = %s
+            WHERE email_id = %s AND user_id = %s
+            RETURNING email_id
+            """,
+            (body, body_html, email_id, user_id),
+        )
+        return cur.fetchone() is not None
 
 
 def find_by_id(conn, email_id: str, user_id: str) -> Optional[AnalyzedEmail]:
@@ -194,6 +215,7 @@ def _to_model(row: dict) -> AnalyzedEmail:
         subject=row["subject"],
         received_date=str(row["received_date"] or ""),
         body=row["body"],
+        body_html=row.get("body_html"),
         source_file=row["source_file"],
         category=row["category"],
         tab=row["tab"],

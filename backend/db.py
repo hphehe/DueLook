@@ -37,6 +37,7 @@ def _initialize_schema():
                     subject TEXT NOT NULL,
                     received_date TIMESTAMPTZ,
                     body TEXT NOT NULL,
+                    body_html TEXT,
                     source_file TEXT NOT NULL,
                     category TEXT NOT NULL,
                     tab TEXT NOT NULL,
@@ -51,6 +52,9 @@ def _initialize_schema():
             )
             cur.execute(
                 "ALTER TABLE email_state ADD COLUMN IF NOT EXISTS pre_delete_tab TEXT"
+            )
+            cur.execute(
+                "ALTER TABLE email_state ADD COLUMN IF NOT EXISTS body_html TEXT"
             )
             cur.execute(
                 "ALTER TABLE users ALTER COLUMN password_salt DROP NOT NULL"
