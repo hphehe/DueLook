@@ -13,6 +13,18 @@ def import_email(file_bytes: bytes, filename: str, user_id: str) -> ImportResult
     with get_db() as conn:
         existing = email_repository.find_by_id(conn, record_id, user_id)
         if existing:
+            if record.body_html and not existing.body_html:
+                email_repository.update_content(
+                    conn,
+                    record_id,
+                    user_id,
+                    record.body,
+                    record.body_html,
+                )
+                existing = existing.model_copy(update={
+                    "body": record.body,
+                    "body_html": record.body_html,
+                })
             return ImportResult(email=existing, is_duplicate=True)
         analyzed = analyze(record)
         analyzed.email_id = record_id

@@ -1,12 +1,10 @@
-import base64
-import html
 import os
-import re
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from db import get_db
+from email_content import extract_gmail_bodies
 from llm_service import analyze
 from repositories import email_repository, user_repository
 from schemas import EmailRecord, SyncResult
@@ -16,27 +14,7 @@ _CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 _TOKEN_URI = "https://oauth2.googleapis.com/token"
 
 
-def _extract_text(payload: dict) -> str:
-    mime = payload.get("mimeType", "")
-    if mime == "text/plain":
-        data = payload.get("body", {}).get("data", "")
-        if data:
-            return base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="replace")
-    for part in payload.get("parts", []):
-        text = _extract_text(part)
-        if text:
-            return text
-    if mime == "text/html":
-        data = payload.get("body", {}).get("data", "")
-        if data:
-            raw = base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="replace")
-            raw = re.sub(r"<(style|script|head)[^>]*>.*?</(style|script|head)>", " ", raw, flags=re.DOTALL | re.IGNORECASE)
-            text = re.sub(r"<[^>]+>", " ", raw)
-            return re.sub(r"\s+", " ", html.unescape(text)).strip()
-    return ""
-
-
-#Sync emails from Gmail
+# Sync emails from Gmail
 def sync(user_id: str) -> SyncResult:
     with get_db() as conn:
         refresh_token = user_repository.get_google_refresh_token(conn, user_id)
@@ -62,6 +40,7 @@ def sync(user_id: str) -> SyncResult:
     messages = result.get("messages", [])
 
     skipped = 0
+    updated = 0
     to_analyze: list[tuple[str, EmailRecord]] = []
 
     for msg_ref in messages:
@@ -69,14 +48,31 @@ def sync(user_id: str) -> SyncResult:
         record_id = f"{user_id}:gmail:{msg_id}"
 
         with get_db() as conn:
-            if email_repository.find_by_id(conn, record_id, user_id):
-                skipped += 1
-                continue
+            existing = email_repository.find_by_id(conn, record_id, user_id)
+        if existing and existing.body_html is not None:
+            skipped += 1
+            continue
 
         msg = service.users().messages().get(userId="me", id=msg_id, format="full").execute()
         payload = msg.get("payload", {})
         hdrs = {h["name"]: h["value"] for h in payload.get("headers", [])}
-        body = _extract_text(payload) or "(no body)"
+        body, body_html = extract_gmail_bodies(payload)
+        body = body or "(no body)"
+
+        if existing:
+            with get_db() as conn:
+                email_repository.update_content(
+                    conn,
+                    record_id,
+                    user_id,
+                    body[:3000],
+                    body_html or "",
+                )
+            if body_html:
+                updated += 1
+            else:
+                skipped += 1
+            continue
 
         to_analyze.append((record_id, EmailRecord(
             email_id=msg_id,
@@ -84,6 +80,7 @@ def sync(user_id: str) -> SyncResult:
             subject=hdrs.get("Subject", "(No Subject)"),
             received_date=hdrs.get("Date", ""),
             body=body[:3000],
+            body_html=body_html or "",
             source_file=f"gmail:{msg_id}",
         )))
 
@@ -95,4 +92,4 @@ def sync(user_id: str) -> SyncResult:
             email_repository.upsert(conn, analyzed, user_id, record_id)
         imported += 1
 
-    return SyncResult(imported=imported, skipped=skipped)
+    return SyncResult(imported=imported, skipped=skipped, updated=updated)

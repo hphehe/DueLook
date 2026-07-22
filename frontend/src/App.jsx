@@ -21,10 +21,24 @@ import Toolbar from './components/Toolbar'
 import EmailCard from './components/EmailCard'
 import ContextMenu from './components/ContextMenu'
 import DeadlineModal from './components/DeadlineModal'
-import EmailDetailModal from './components/EmailDetailModal'
+import EmailModal from './components/EmailModal'
 import Calendar from './components/Calendar'
 import DateListModal from './components/DateListModal'
 import { format, parseISO } from 'date-fns'
+
+function gmailSyncMessage(result, prefix = 'Synced') {
+  const changes = []
+  const updated = result.updated ?? 0
+  if (result.imported) {
+    changes.push(`${result.imported} new email${result.imported === 1 ? '' : 's'}`)
+  }
+  if (updated) {
+    changes.push(`${updated} existing email${updated === 1 ? '' : 's'} with rich content`)
+  }
+  const summary = changes.length ? changes.join(' and ') : 'no new email content'
+  const skipped = result.skipped ? ` (${result.skipped} already up to date)` : ''
+  return `${prefix} ${summary} from Gmail${skipped}.`
+}
 
 export default function App() {
   const [user, setUser]                   = useState(null)
@@ -262,11 +276,8 @@ export default function App() {
     setError(null)
     try {
       const result = await syncGmail()
-      setUploadMsg(
-        `Synced ${result.imported} new email${result.imported !== 1 ? 's' : ''} from Gmail` +
-        (result.skipped ? ` (${result.skipped} already imported)` : '') + '.'
-      )
-      if (result.imported > 0) await reload()
+      setUploadMsg(gmailSyncMessage(result))
+      if (result.imported + (result.updated ?? 0) > 0) await reload()
     } catch (e) {
       setError(e.message)
     } finally {
@@ -278,8 +289,8 @@ export default function App() {
     setSyncing(true)
     try {
       const result = await syncGmail()
-      if (result.imported > 0) {
-        setUploadMsg(`Auto-synced ${result.imported} new email${result.imported !== 1 ? 's' : ''} from Gmail.`)
+      if (result.imported + (result.updated ?? 0) > 0) {
+        setUploadMsg(gmailSyncMessage(result, 'Auto-synced'))
         await reload()
       }
     } catch {
@@ -438,7 +449,7 @@ export default function App() {
       />
 
       {selectedEmail && (
-        <EmailDetailModal
+        <EmailModal
           email={selectedEmail}
           onClose={() => setSelectedEmail(null)}
           onContextMenu={ev => selectedEmail.tab !== 'BIN'

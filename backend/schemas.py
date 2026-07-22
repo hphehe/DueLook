@@ -8,6 +8,7 @@ class EmailRecord(BaseModel):
     subject: str
     received_date: str
     body: str
+    body_html: Optional[str] = None
     source_file: str
 
 
@@ -55,3 +56,4 @@ class AuthToken(BaseModel):
 class SyncResult(BaseModel):
     imported: int
     skipped: int
+    updated: int = 0
