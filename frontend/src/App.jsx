@@ -58,12 +58,29 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(null)
   const [dateModalEmails, setDateModalEmails] = useState([])
   const fileRef = useRef()
+  const allEmailsCountRef = useRef(0)
+  useEffect(() => { allEmailsCountRef.current = allEmails.length }, [allEmails.length])
 
-  //Auto-sync on login and every 15 minutes while logged in
+  // Auto-sync once on login so the user sees fresh emails immediately
   useEffect(() => {
     if (!user) return
     silentSync()
-    const interval = setInterval(silentSync, 15 * 60 * 1000)
+  }, [user?.user_id])
+
+  //Poll the DB every 2 minutes to pick up emails imported by the background scheduler
+  useEffect(() => {
+    if (!user) return
+    const interval = setInterval(async () => {
+      const prevCount = allEmailsCountRef.current
+      await reload()
+      setAllEmails(prev => {
+        if (prev.length > prevCount) {
+          const diff = prev.length - prevCount
+          setUploadMsg(`${diff} new email${diff === 1 ? '' : 's'} arrived.`)
+        }
+        return prev
+      })
+    }, 2 * 60 * 1000)
     return () => clearInterval(interval)
   }, [user?.user_id])
 
