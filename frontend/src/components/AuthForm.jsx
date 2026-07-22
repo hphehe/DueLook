@@ -49,7 +49,10 @@ export default function AuthForm({ onAuthSuccess }) {
       </a>
 
       <div className="auth-divider"><span>or continue with email</span></div>
-      <p className="gmail-rec"><strong>RECOMMENDED:</strong> Sign in with Google for automatic Gmail sync</p>
+      <div className="sandbox-warning">
+        <strong>Sandbox mode: </strong>email login has no Gmail connection.
+        You can only import <code>.eml</code> files manually. Sign in with Google above for automatic inbox sync.
+      </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
