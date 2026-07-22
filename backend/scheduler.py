@@ -20,4 +20,4 @@ def sync_all_users():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(sync_all_users, "interval", minutes=2, id="gmail_sync")
+scheduler.add_job(sync_all_users, "interval", minutes=15, id="gmail_sync")
