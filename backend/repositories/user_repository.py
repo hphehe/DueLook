@@ -64,6 +64,14 @@ def create_session(conn, user_id: str, token: str, expires_at):
 		)
 
 
+def get_all_google_user_ids(conn) -> list[str]:
+	with conn.cursor() as cur:
+		cur.execute(
+			"SELECT user_id FROM users WHERE google_refresh_token IS NOT NULL"
+		)
+		return [row[0] for row in cur.fetchall()]
+
+
 def find_by_google_id(conn, google_id: str):
 	with conn.cursor() as cur:
 		cur.execute(
