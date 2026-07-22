@@ -24,6 +24,7 @@ import DeadlineModal from './components/DeadlineModal'
 import EmailModal from './components/EmailModal'
 import Calendar from './components/Calendar'
 import DateListModal from './components/DateListModal'
+import Footer from './components/Footer'
 import { format, parseISO } from 'date-fns'
 
 function gmailSyncMessage(result, prefix = 'Synced') {
@@ -355,21 +356,28 @@ export default function App() {
 
   if (booting) {
     return (
-      <div className="auth-shell">
-        <div className="empty">Loading…</div>
-      </div>
+      <>
+        <div className="auth-shell">
+          <div className="empty">Loading…</div>
+        </div>
+        <Footer />
+      </>
     )
   }
 
   if (!user) {
     return (
-      <div className="auth-shell">
-        <AuthForm onAuthSuccess={setUser} />
-      </div>
+      <>
+        <div className="auth-shell">
+          <AuthForm onAuthSuccess={setUser} />
+        </div>
+        <Footer />
+      </>
     )
   }
 
   return (
+    <>
     <div className="app">
       <header className="header">
         <div>
@@ -476,5 +484,7 @@ export default function App() {
         />
       )}
     </div>
+    <Footer />
+    </>
   )
 }
