@@ -299,3 +299,22 @@
     transition: none;
   }
 }
+
+:root[data-theme='dark'] .due-calendar {
+  --calendar-border: #2a3a50;
+  --calendar-surface: #121e30;
+  --calendar-surface-subtle: #19283c;
+  --calendar-ink: #e7edf6;
+  --calendar-muted: #9fb0c5;
+  --calendar-faint: #71849c;
+  --calendar-event-bg: #1c3a5c;
+  --calendar-event-ink: #cfe4ff;
+  --calendar-overdue-bg: #44272e;
+  --calendar-overdue-ink: #ffc3c3;
+}
+:root[data-theme='dark'] .due-calendar__arrow { color: #c0cede; }
+:root[data-theme='dark'] .due-calendar__arrow:hover { border-color: #50647e; }
+:root[data-theme='dark'] .due-calendar__cell.is-outside { background: #0e1929; }
+:root[data-theme='dark'] .due-calendar__cell.is-outside:hover { background: #162438; }
+:root[data-theme='dark'] .due-calendar__event-dot { background: #8abaff; }
+:root[data-theme='dark'] .due-calendar__event.is-overdue .due-calendar__event-dot { background: #ff8585; }

@@ -14,6 +14,7 @@ body {
 
 .app {
   flex: 1;
+  width: 100%;
   max-width: 860px;
   margin: 0 auto;
   padding: 0 1rem 3rem;
@@ -946,3 +947,82 @@ body {
 .date-email-item { padding: 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff }
 .date-email-subject { font-weight: 600; cursor: pointer }
 .date-email-meta { font-size: 0.82rem; color: #64748b }
+
+/* Dark theme */
+:root[data-theme='dark'] { color-scheme: dark; }
+:root[data-theme='dark'] body { background: #0b1320; color: #e7edf6; }
+:root[data-theme='dark'] .header { border-color: #26364b; }
+:root[data-theme='dark'] .subtitle,
+:root[data-theme='dark'] .sender,
+:root[data-theme='dark'] .card-meta,
+:root[data-theme='dark'] .modal-meta,
+:root[data-theme='dark'] .deadline-preview,
+:root[data-theme='dark'] .auth-divider,
+:root[data-theme='dark'] .date-email-meta,
+:root[data-theme='dark'] .cal-weekday,
+:root[data-theme='dark'] .empty { color: #9fb0c5; }
+
+:root[data-theme='dark'] .auth-card,
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .modal,
+:root[data-theme='dark'] .ctx-menu,
+:root[data-theme='dark'] .calendar,
+:root[data-theme='dark'] .date-email-item { background: #121e30; border-color: #2a3a50; }
+:root[data-theme='dark'] .card:hover { border-color: #3b4c63; box-shadow: none; }
+
+:root[data-theme='dark'] .auth-form label,
+:root[data-theme='dark'] .subject,
+:root[data-theme='dark'] .modal-subject,
+:root[data-theme='dark'] .modal-body,
+:root[data-theme='dark'] .modal-body--rich h1,
+:root[data-theme='dark'] .modal-body--rich h2,
+:root[data-theme='dark'] .modal-body--rich h3,
+:root[data-theme='dark'] .modal-body--rich h4,
+:root[data-theme='dark'] .modal-body--rich h5,
+:root[data-theme='dark'] .modal-body--rich h6,
+:root[data-theme='dark'] .ctx-item,
+:root[data-theme='dark'] .date-email-subject,
+:root[data-theme='dark'] .cal-day { color: #e7edf6; }
+
+:root[data-theme='dark'] .auth-form input,
+:root[data-theme='dark'] .deadline-input,
+:root[data-theme='dark'] .cal-select { background: #0e1929; border-color: #3b4c63; color: #e7edf6; }
+:root[data-theme='dark'] .auth-form input::placeholder { color: #8fa2ba; }
+
+:root[data-theme='dark'] .tab-btn,
+:root[data-theme='dark'] .sync-btn,
+:root[data-theme='dark'] .google-btn,
+:root[data-theme='dark'] .deadline-cancel { background: #121e30; border-color: #3b4c63; color: #c6d2e1; }
+:root[data-theme='dark'] .tab-btn:hover,
+:root[data-theme='dark'] .sync-btn:hover:not(:disabled),
+:root[data-theme='dark'] .google-btn:hover,
+:root[data-theme='dark'] .deadline-cancel:hover,
+:root[data-theme='dark'] .ctx-item:hover,
+:root[data-theme='dark'] .modal-tool:hover,
+:root[data-theme='dark'] .cal-cell:not(.cal-weekday):hover { background: #19283c; border-color: #50647e; }
+:root[data-theme='dark'] .tab-btn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+:root[data-theme='dark'] .tab-btn.bin-tab:not(.active) { background: transparent; }
+
+:root[data-theme='dark'] .category-badge { background: #223148; color: #c0cede; }
+:root[data-theme='dark'] .avatar { background: #263b63; color: #b9ceff; }
+:root[data-theme='dark'] .modal-tool { color: #9fb0c5; }
+:root[data-theme='dark'] .modal-body a { color: #8abaff; }
+:root[data-theme='dark'] .modal-body a:hover { color: #b7d3ff; }
+:root[data-theme='dark'] .modal-body--rich th,
+:root[data-theme='dark'] .modal-body--rich td { border-color: #2a3a50; }
+:root[data-theme='dark'] .modal-body--rich blockquote { background: #18263a; border-color: #34465e; color: #c0cede; }
+:root[data-theme='dark'] .ctx-divider,
+:root[data-theme='dark'] .auth-divider::before,
+:root[data-theme='dark'] .auth-divider::after { background: #2a3a50; }
+:root[data-theme='dark'] .ctx-delete:hover { background: #3d2028; color: #ff9999; }
+
+:root[data-theme='dark'] .banner.success { background: #153a2b; color: #9ce8b8; }
+:root[data-theme='dark'] .banner.error { background: #44242a; color: #ffb4b4; }
+:root[data-theme='dark'] .sandbox-warning { background: #3a3018; border-color: #665522; color: #f6d98a; }
+:root[data-theme='dark'] .sandbox-warning code { background: #51421d; }
+
+:root[data-theme='dark'] .calendar { color: #e7edf6; }
+:root[data-theme='dark'] .cal-cell.muted { opacity: 0.52; }
+:root[data-theme='dark'] .date-email-item { color: #e7edf6; }
+:root[data-theme='dark'] .modal-backdrop,
+:root[data-theme='dark'] .modal-overlay { background: rgba(3, 8, 16, 0.72); }
