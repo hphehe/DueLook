@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -11,7 +12,14 @@ jobs:
       run:
         working-directory: backend
     env:
-      GROQ_API_KEY: test-key
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GOOGLE_CLIENT_ID: placeholder
+      GOOGLE_CLIENT_SECRET: placeholder
+      GOOGLE_REDIRECT_URI: http://localhost:8000/auth/google/callback
+      FRONTEND_URL: http://localhost:5173
+      OAUTHLIB_INSECURE_TRANSPORT: "1"
+      OAUTHLIB_RELAX_TOKEN_SCOPE: "1"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -26,8 +34,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run backend tests
-        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Run unit tests
+        run: python -m pytest tests/test_file_parser.py tests/test_llm_service.py -v
+
+      - name: Run integration and E2E tests
+        run: python -m pytest tests/test_auth.py tests/test_emails.py tests/test_e2e.py -v
 
   frontend:
     runs-on: ubuntu-latest
