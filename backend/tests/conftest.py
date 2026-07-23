@@ -40,7 +40,7 @@ def mock_llm():
             tab="FILTERED",
             extracted_deadline=None,
         )
-    with patch("email_service.analyze", side_effect=_fake):
+    with patch("services.email_service.analyze", side_effect=_fake):
         yield
 
 
