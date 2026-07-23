@@ -1,9 +1,52 @@
+:root {
+  --ui-bg: #f4f6f9;
+  --ui-surface: #fff;
+  --ui-surface-raised: #fff;
+  --ui-surface-subtle: #f8fafc;
+  --ui-surface-hover: #f1f5f9;
+  --ui-text: #0f172a;
+  --ui-text-soft: #334155;
+  --ui-muted: #64748b;
+  --ui-faint: #a8b3c3;
+  --ui-border: #e2e8f0;
+  --ui-border-strong: #cbd5e1;
+  --ui-accent: #2563eb;
+  --ui-accent-soft: #eff6ff;
+  --ui-danger: #b42318;
+  --ui-danger-soft: #fff1f0;
+  --ui-success: #067647;
+  --ui-success-soft: #ecfdf3;
+  --ui-shadow: 0 18px 38px rgba(15, 23, 42, 0.12), 0 3px 10px rgba(15, 23, 42, 0.06);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ui-bg: #0b1320;
+  --ui-surface: #121e30;
+  --ui-surface-raised: #162338;
+  --ui-surface-subtle: #19283c;
+  --ui-surface-hover: #213148;
+  --ui-text: #e7edf6;
+  --ui-text-soft: #d8e1ed;
+  --ui-muted: #9fb0c5;
+  --ui-faint: #71849c;
+  --ui-border: #2a3a50;
+  --ui-border-strong: #3b4c63;
+  --ui-accent: #60a5fa;
+  --ui-accent-soft: #1b3658;
+  --ui-danger: #ff9999;
+  --ui-danger-soft: #3d2028;
+  --ui-success: #86efac;
+  --ui-success-soft: #153a2b;
+  --ui-shadow: none;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f4f6f9;
-  color: #1a1a2e;
+  background: var(--ui-bg);
+  color: var(--ui-text);
 }
 
 #root {
@@ -14,12 +57,13 @@ body {
 
 .app {
   flex: 1;
+  width: 100%;
   max-width: 860px;
   margin: 0 auto;
   padding: 0 1rem 3rem;
 }
 
-/* ── Auth screen ── */
+/* Auth screen */
 .auth-shell {
   min-height: 100vh;
   display: grid;
@@ -83,8 +127,7 @@ body {
 }
 
 .primary-btn,
-.switch-btn,
-.logout-btn {
+.switch-btn {
   border: none;
   font: inherit;
   cursor: pointer;
@@ -109,10 +152,10 @@ body {
   font-weight: 600;
 }
 
-/* ── Header ── */
+/* Header */
 .header {
   padding: 2rem 0 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--ui-border);
   margin-bottom: 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -128,35 +171,12 @@ body {
 
 .subtitle {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--ui-muted);
   margin-top: 0.25rem;
 }
 
-.session-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-shrink: 0;
-}
 
-.session-email {
-  font-size: 0.82rem;
-  color: #475569;
-  font-weight: 500;
-}
-
-.logout-btn {
-  background: #fff;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-  padding: 0.35rem 0.8rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-}
-
-.logout-btn:hover { background: #f1f5f9; }
-
-/* ── Toolbar ── */
+/* Toolbar */
 .toolbar {
   display: flex;
   align-items: center;
@@ -207,7 +227,7 @@ body {
 .upload-btn:hover:not(:disabled) { background: #2563eb; }
 .upload-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ── Banners ── */
+/* Banners */
 .banner {
   padding: 0.6rem 1rem;
   border-radius: 8px;
@@ -218,7 +238,7 @@ body {
 .banner.success { background: #dcfce7; color: #166534; }
 .banner.error   { background: #fee2e2; color: #991b1b; }
 
-/* ── Empty state ── */
+/* Empty state */
 .empty {
   text-align: center;
   color: #94a3b8;
@@ -226,7 +246,7 @@ body {
   font-size: 0.95rem;
 }
 
-/* ── Email list ── */
+/* Email list */
 .email-list {
   list-style: none;
   display: flex;
@@ -361,7 +381,7 @@ body {
 
 .dismiss-btn:hover { background: #6b7280; color: #fff; }
 
-/* ── Modal ── */
+/* Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -550,7 +570,7 @@ body {
 
 .card { cursor: pointer; }
 
-/* ── Bin tab ── */
+/* Bin tab */
 .tab-btn.bin-tab { color: #ef4444; border-color: #ef4444; padding: 0.4rem 0.75rem; display: inline-flex; align-items: center; justify-content: center; }
 .tab-btn.bin-tab:hover { background: #ef4444; color: #fff; }
 .tab-btn.bin-tab.active { background: #ef4444; border-color: #ef4444; color: #fff; }
@@ -905,9 +925,6 @@ body {
     align-items: stretch;
   }
 
-  .session-chip {
-    justify-content: space-between;
-  }
 
   .modal--fullscreen {
     padding: 4.25rem 1rem 1rem;
@@ -919,30 +936,78 @@ body {
   }
 }
 
-/* Calendar styles */
-.calendar { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 0.6rem; margin-bottom: 1rem }
-.calendar-header { display:flex; align-items:center; justify-content:space-between; padding: 0 0.4rem 0.6rem }
-.cal-selectors { display: flex; gap: 0.4rem; align-items: center }
-.cal-select { font: inherit; font-weight: 700; font-size: 0.95rem; color: #0f172a; background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0.2rem 0.5rem; cursor: pointer }
-.cal-select:hover { border-color: #3b82f6 }
-.cal-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) }
-.cal-btn { background: transparent; border: none; font-size: 1.1rem; cursor: pointer }
-.cal-grid { display: flex; flex-direction: column; gap: 0.25rem }
-.cal-row { display: flex }
-.cal-cell { flex: 1; padding: 0.5rem; min-height: 56px; border-radius: 12px; position: relative; cursor: pointer }
-.cal-cell:not(.cal-weekday) { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; transition: background 0.12s }
-.cal-cell:not(.cal-weekday):hover { background: #f1f5f9 }
-.cal-cell.muted { opacity: 0.4 }
-.cal-weekday { font-size: 0.75rem; color: #64748b; text-align: center; cursor: default }
-.cal-day { font-size: 0.85rem; font-weight: 600 }
-.cal-day.today { color: #2563eb }
-.cal-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; opacity: 0.18; transition: opacity 0.12s }
-.cal-dot.past { background: #94a3b8 }
-.cal-cell:hover .cal-dot { opacity: 1 }
-
 /* Simple modal backdrop used by DateListModal */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index: 300 }
 .date-email-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding: 0 }
 .date-email-item { padding: 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff }
 .date-email-subject { font-weight: 600; cursor: pointer }
 .date-email-meta { font-size: 0.82rem; color: #64748b }
+
+/* Dark theme */
+:root[data-theme='dark'] .subtitle,
+:root[data-theme='dark'] .sender,
+:root[data-theme='dark'] .card-meta,
+:root[data-theme='dark'] .modal-meta,
+:root[data-theme='dark'] .deadline-preview,
+:root[data-theme='dark'] .auth-divider,
+:root[data-theme='dark'] .date-email-meta,
+:root[data-theme='dark'] .empty { color: #9fb0c5; }
+
+:root[data-theme='dark'] .auth-card,
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .modal,
+:root[data-theme='dark'] .ctx-menu,
+:root[data-theme='dark'] .date-email-item { background: #121e30; border-color: #2a3a50; }
+:root[data-theme='dark'] .card:hover { border-color: #3b4c63; box-shadow: none; }
+
+:root[data-theme='dark'] .auth-form label,
+:root[data-theme='dark'] .subject,
+:root[data-theme='dark'] .modal-subject,
+:root[data-theme='dark'] .modal-body,
+:root[data-theme='dark'] .modal-body--rich h1,
+:root[data-theme='dark'] .modal-body--rich h2,
+:root[data-theme='dark'] .modal-body--rich h3,
+:root[data-theme='dark'] .modal-body--rich h4,
+:root[data-theme='dark'] .modal-body--rich h5,
+:root[data-theme='dark'] .modal-body--rich h6,
+:root[data-theme='dark'] .ctx-item,
+:root[data-theme='dark'] .date-email-subject { color: #e7edf6; }
+
+:root[data-theme='dark'] .auth-form input,
+:root[data-theme='dark'] .deadline-input { background: #0e1929; border-color: #3b4c63; color: #e7edf6; }
+:root[data-theme='dark'] .auth-form input::placeholder { color: #8fa2ba; }
+
+:root[data-theme='dark'] .tab-btn,
+:root[data-theme='dark'] .sync-btn,
+:root[data-theme='dark'] .google-btn,
+:root[data-theme='dark'] .deadline-cancel { background: #121e30; border-color: #3b4c63; color: #c6d2e1; }
+:root[data-theme='dark'] .tab-btn:hover,
+:root[data-theme='dark'] .sync-btn:hover:not(:disabled),
+:root[data-theme='dark'] .google-btn:hover,
+:root[data-theme='dark'] .deadline-cancel:hover,
+:root[data-theme='dark'] .ctx-item:hover,
+:root[data-theme='dark'] .modal-tool:hover { background: #19283c; border-color: #50647e; }
+:root[data-theme='dark'] .tab-btn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+:root[data-theme='dark'] .tab-btn.bin-tab:not(.active) { background: transparent; }
+
+:root[data-theme='dark'] .category-badge { background: #223148; color: #c0cede; }
+:root[data-theme='dark'] .avatar { background: #263b63; color: #b9ceff; }
+:root[data-theme='dark'] .modal-tool { color: #9fb0c5; }
+:root[data-theme='dark'] .modal-body a { color: #8abaff; }
+:root[data-theme='dark'] .modal-body a:hover { color: #b7d3ff; }
+:root[data-theme='dark'] .modal-body--rich th,
+:root[data-theme='dark'] .modal-body--rich td { border-color: #2a3a50; }
+:root[data-theme='dark'] .modal-body--rich blockquote { background: #18263a; border-color: #34465e; color: #c0cede; }
+:root[data-theme='dark'] .ctx-divider,
+:root[data-theme='dark'] .auth-divider::before,
+:root[data-theme='dark'] .auth-divider::after { background: #2a3a50; }
+:root[data-theme='dark'] .ctx-delete:hover { background: #3d2028; color: #ff9999; }
+
+:root[data-theme='dark'] .banner.success { background: #153a2b; color: #9ce8b8; }
+:root[data-theme='dark'] .banner.error { background: #44242a; color: #ffb4b4; }
+:root[data-theme='dark'] .sandbox-warning { background: #3a3018; border-color: #665522; color: #f6d98a; }
+:root[data-theme='dark'] .sandbox-warning code { background: #51421d; }
+
+:root[data-theme='dark'] .date-email-item { color: #e7edf6; }
+:root[data-theme='dark'] .modal-backdrop,
+:root[data-theme='dark'] .modal-overlay { background: rgba(3, 8, 16, 0.72); }

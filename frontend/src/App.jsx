@@ -16,6 +16,7 @@ import {
   syncGmail,
 } from './api'
 import { toDateTimeLocal } from './utils'
+import { applyTheme, getInitialTheme } from './theme'
 import AuthForm from './components/AuthForm'
 import Toolbar from './components/Toolbar'
 import EmailCard from './components/EmailCard'
@@ -25,6 +26,8 @@ import EmailModal from './components/EmailModal'
 import Calendar from './components/Calendar'
 import DateListModal from './components/DateListModal'
 import Footer from './components/Footer'
+import AccountMenu from './components/AccountMenu'
+import SettingsPanel from './components/SettingsPanel'
 import { format, parseISO } from 'date-fns'
 
 function gmailSyncMessage(result, prefix = 'Synced') {
@@ -42,6 +45,7 @@ function gmailSyncMessage(result, prefix = 'Synced') {
 }
 
 export default function App() {
+  const [theme, setTheme]                 = useState(getInitialTheme)
   const [user, setUser]                   = useState(null)
   const [booting, setBooting]             = useState(true)
   const [activeTab, setActiveTab]         = useState(null)
@@ -58,9 +62,12 @@ export default function App() {
   const [deadlineValue, setDeadlineValue] = useState('')
   const [selectedDate, setSelectedDate] = useState(null)
   const [dateModalEmails, setDateModalEmails] = useState([])
+  const [settingsOpen, setSettingsOpen]       = useState(false)
   const fileRef = useRef()
   const allEmailsCountRef = useRef(0)
   useEffect(() => { allEmailsCountRef.current = allEmails.length }, [allEmails.length])
+
+  useEffect(() => applyTheme(theme), [theme])
 
   // Auto-sync once on login so the user sees fresh emails immediately
   useEffect(() => {
@@ -351,7 +358,19 @@ export default function App() {
     setSelectedEmail(null)
     setMenu(null)
     setDeadlineModal(null)
+    setSettingsOpen(false)
     setLoading(true)
+  }
+
+  const handleOpenSettings = () => {
+    setSelectedEmail(null)
+    setMenu(null)
+    setDeadlineModal(null)
+    setSelectedDate(null)
+    setDateModalEmails([])
+    setUploadMsg(null)
+    setError(null)
+    setSettingsOpen(true)
   }
 
   if (booting) {
@@ -384,12 +403,26 @@ export default function App() {
           <h1>DueLook</h1>
           <p className="subtitle">Let us look for what's due.</p>
         </div>
-        <div className="session-chip">
-          <span className="session-email">{user.email}</span>
-          <button className="logout-btn" onClick={handleLogout}>Log out</button>
-        </div>
+        <AccountMenu
+          user={user}
+          onOpenSettings={handleOpenSettings}
+          onLogout={handleLogout}
+        />
       </header>
 
+      {settingsOpen ? (
+        <SettingsPanel
+          user={user}
+          syncing={syncing}
+          statusMessage={uploadMsg}
+          error={error}
+          theme={theme}
+          onBack={() => setSettingsOpen(false)}
+          onSyncGmail={handleSyncGmail}
+          onThemeChange={setTheme}
+        />
+      ) : (
+        <>
       <Toolbar
         activeTab={activeTab}
         onTabClick={handleTabClick}
@@ -482,6 +515,8 @@ export default function App() {
             : ev.preventDefault()}
           onMarkDone={() => handleMarkDone(selectedEmail.email_id)}
         />
+      )}
+        </>
       )}
     </div>
     <Footer />
