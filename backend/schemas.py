@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class EmailRecord(BaseModel):
@@ -18,6 +18,10 @@ class AnalyzedEmail(EmailRecord):
     category: str
     tab: str
     extracted_deadline: Optional[str] = None
+    ai_tab: Optional[str] = None
+    ai_deadline: Optional[str] = None
+    ai_confidence: Optional[float] = None
+    review_reason: Optional[str] = None
 
 
 class LLMAnalysisResponse(BaseModel):
@@ -33,6 +37,12 @@ class LLMAnalysisResponse(BaseModel):
     ]
     tab: Literal["FILTERED", "NEEDS_REVIEW", "NO_DEADLINE"]
     extracted_deadline: Optional[str]
+    confidence: float = Field(ge=0, le=1)
+    review_reason: Literal[
+        "NONE",
+        "VAGUE_TIME",
+        "MULTIPLE_DATES",
+    ]
 
     @field_validator("extracted_deadline")
     @classmethod
@@ -48,11 +58,15 @@ class LLMAnalysisResponse(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def validate_deadline_matches_tab(self) -> "LLMAnalysisResponse":
+    def validate_fields_match_tab(self) -> "LLMAnalysisResponse":
         if self.tab == "FILTERED" and self.extracted_deadline is None:
             raise ValueError("FILTERED requires a deadline")
         if self.tab != "FILTERED" and self.extracted_deadline is not None:
             raise ValueError("Only FILTERED emails may have a deadline")
+        if self.tab == "NEEDS_REVIEW" and self.review_reason == "NONE":
+            raise ValueError("NEEDS_REVIEW requires a review reason")
+        if self.tab != "NEEDS_REVIEW" and self.review_reason != "NONE":
+            raise ValueError("Only NEEDS_REVIEW may have a review reason")
         return self
 
 
