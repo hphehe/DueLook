@@ -1,7 +1,10 @@
-﻿__pycache__/
+__pycache__/
 *.pyc
 .env
 venv/
 node_modules/
 frontend/dist/
 clear_user.py
+.pytest_cache/
+pytest-cache-files-*/
+.vscode/
