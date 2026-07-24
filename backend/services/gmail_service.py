@@ -1,4 +1,5 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -84,10 +85,16 @@ def sync(user_id: str) -> SyncResult:
             source_file=f"gmail:{msg_id}",
         )))
 
-    imported = 0
-    for record_id, record in to_analyze:
+    def _classify(item: tuple) -> tuple:
+        record_id, record = item
         analyzed = analyze(record)
         analyzed.email_id = record_id
+        return record_id, analyzed
+
+    imported = 0
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        results = list(executor.map(_classify, to_analyze))
+    for record_id, analyzed in results:
         with get_db() as conn:
             email_repository.upsert(conn, analyzed, user_id, record_id)
         imported += 1
