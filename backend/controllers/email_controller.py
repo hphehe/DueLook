@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Security, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from schemas import AnalyzedEmail, ImportResult, SetDeadlineRequest, SetTabRequest, SyncResult
+from schemas import AnalyzedEmail, ImportResult, PaginatedEmailsResult, SetDeadlineRequest, SetTabRequest, SyncResult
 from services import auth_service, email_service, gmail_service
 
 router = APIRouter(prefix="/emails")
@@ -34,9 +34,14 @@ def search_emails(q: str = Query(..., min_length=1), current_user=Depends(_curre
     return email_service.search_emails(q, current_user.user_id)
 
 
-@router.get("", response_model=list[AnalyzedEmail])
-def list_emails(tab: Optional[str] = Query(None), current_user=Depends(_current_user)):
-    return email_service.list_emails(tab, current_user.user_id)
+@router.get("", response_model=PaginatedEmailsResult)
+def list_emails(
+    tab: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=500),
+    current_user=Depends(_current_user),
+):
+    return email_service.list_emails(tab, current_user.user_id, page=page, limit=limit)
 
 
 @router.post("/{email_id}/done", status_code=204)

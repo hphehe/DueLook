@@ -1,4 +1,5 @@
 import React from 'react'
+import './DateListModal.css'
 import { format, parseISO } from 'date-fns'
 
 export default function DateListModal({ open, date, emails = [], onClose, onEmailClick }) {

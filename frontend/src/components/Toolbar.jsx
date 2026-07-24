@@ -1,4 +1,5 @@
 import { TABS } from '../constants'
+import './Toolbar.css'
 
 export default function Toolbar({ activeTab, onTabClick, uploading, fileRef, onFileChange, syncing, onSyncGmail, hasGmail, searchQuery, onSearchChange }) {
   return (

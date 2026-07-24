@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import './AuthForm.css'
 
 import { login, register, saveToken, googleAuthUrl } from '../api'
 

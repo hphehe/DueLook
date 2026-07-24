@@ -1,0 +1,49 @@
+.ctx-menu {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  min-width: 165px;
+  z-index: 200;
+  padding: 0.35rem 0;
+}
+
+.ctx-section-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0.35rem 0.9rem 0.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ctx-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  color: #1e293b;
+  cursor: pointer;
+}
+
+.ctx-item:hover { background: #f1f5f9; }
+
+.ctx-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.3rem 0;
+}
+
+.ctx-delete { color: #ef4444; }
+.ctx-delete:hover { background: #fee2e2; color: #ef4444; }
+
+/* Dark theme */
+:root[data-theme='dark'] .ctx-menu { background: #121e30; border-color: #2a3a50; }
+:root[data-theme='dark'] .ctx-item { color: #e7edf6; }
+:root[data-theme='dark'] .ctx-item:hover { background: #19283c; }
+:root[data-theme='dark'] .ctx-divider { background: #2a3a50; }
+:root[data-theme='dark'] .ctx-delete:hover { background: #3d2028; color: #ff9999; }

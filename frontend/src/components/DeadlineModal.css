@@ -1,0 +1,53 @@
+.deadline-modal { gap: 0.9rem; }
+
+.deadline-preview {
+  font-size: 0.85rem;
+  color: #64748b;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.deadline-input {
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  width: 100%;
+  color: #1e293b;
+}
+
+.deadline-input:focus { outline: none; border-color: #3b82f6; }
+
+.deadline-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.flex-spacer { flex: 1; }
+
+.deadline-clear, .deadline-cancel, .deadline-save {
+  padding: 0.4rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.deadline-clear { background: transparent; color: #ef4444; border: 1.5px solid #ef4444; }
+.deadline-clear:hover { background: #ef4444; color: #fff; }
+
+.deadline-cancel { background: transparent; color: #64748b; border: 1.5px solid #cbd5e1; }
+.deadline-cancel:hover { background: #f1f5f9; }
+
+.deadline-save { background: #3b82f6; color: #fff; border: 1.5px solid #3b82f6; }
+.deadline-save:hover { background: #2563eb; border-color: #2563eb; }
+
+/* Dark theme */
+:root[data-theme='dark'] .deadline-preview { color: #9fb0c5; }
+:root[data-theme='dark'] .deadline-input { background: #0e1929; border-color: #3b4c63; color: #e7edf6; }
+:root[data-theme='dark'] .deadline-cancel { background: #121e30; border-color: #3b4c63; color: #c6d2e1; }
+:root[data-theme='dark'] .deadline-cancel:hover { background: #19283c; border-color: #50647e; }

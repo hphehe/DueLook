@@ -68,7 +68,22 @@ def find_by_id(conn, email_id: str, user_id: str) -> Optional[AnalyzedEmail]:
         return _to_model(dict(zip(cols, row))) if row else None
 
 
-def get_all(conn, tab: Optional[str], user_id: str) -> list[AnalyzedEmail]:
+def count_all(conn, tab: Optional[str], user_id: str) -> int:
+    with conn.cursor() as cur:
+        if tab:
+            cur.execute(
+                "SELECT COUNT(*) FROM email_state WHERE tab = %s AND user_id = %s",
+                (tab, user_id),
+            )
+        else:
+            cur.execute(
+                "SELECT COUNT(*) FROM email_state WHERE user_id = %s AND tab != 'BIN'",
+                (user_id,),
+            )
+        return cur.fetchone()[0]
+
+
+def get_all(conn, tab: Optional[str], user_id: str, limit: int = 20, offset: int = 0) -> list[AnalyzedEmail]:
     with conn.cursor() as cur:
         if tab:
             cur.execute(
@@ -76,8 +91,9 @@ def get_all(conn, tab: Optional[str], user_id: str) -> list[AnalyzedEmail]:
                 SELECT * FROM email_state
                 WHERE tab = %s AND user_id = %s
                 ORDER BY processed_at DESC
+                LIMIT %s OFFSET %s
                 """,
-                (tab, user_id),
+                (tab, user_id, limit, offset),
             )
         else:
             cur.execute(
@@ -85,8 +101,9 @@ def get_all(conn, tab: Optional[str], user_id: str) -> list[AnalyzedEmail]:
                 SELECT * FROM email_state
                 WHERE user_id = %s AND tab != 'BIN'
                 ORDER BY processed_at DESC
+                LIMIT %s OFFSET %s
                 """,
-                (user_id,),
+                (user_id, limit, offset),
             )
         cols = [d[0] for d in cur.description]
         return [_to_model(dict(zip(cols, row))) for row in cur.fetchall()]

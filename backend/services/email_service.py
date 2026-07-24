@@ -4,7 +4,7 @@ from db import get_db
 from file_parser import parse_eml
 from llm_service import analyze
 from repositories import email_repository
-from schemas import AnalyzedEmail, ImportResult
+from schemas import AnalyzedEmail, ImportResult, PaginatedEmailsResult
 
 
 def import_email(file_bytes: bytes, filename: str, user_id: str) -> ImportResult:
@@ -37,10 +37,14 @@ def search_emails(query: str, user_id: str) -> list[AnalyzedEmail]:
         return email_repository.search(conn, query, user_id)
 
 
-def list_emails(tab: Optional[str], user_id: str) -> list[AnalyzedEmail]:
+def list_emails(tab: Optional[str], user_id: str, page: int = 1, limit: int = 20) -> PaginatedEmailsResult:
+    offset = (page - 1) * limit
     with get_db() as conn:
         email_repository.mark_missed(conn, user_id)
-        return email_repository.get_all(conn, tab, user_id)
+        total = email_repository.count_all(conn, tab, user_id)
+        emails = email_repository.get_all(conn, tab, user_id, limit=limit, offset=offset)
+    total_pages = max(1, -(-total // limit))  # ceiling division
+    return PaginatedEmailsResult(emails=emails, total=total, page=page, limit=limit, total_pages=total_pages)
 
 
 def mark_done(email_id: str, user_id: str) -> None:

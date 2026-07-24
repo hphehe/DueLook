@@ -64,6 +64,8 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(null)
   const [dateModalEmails, setDateModalEmails] = useState([])
   const [settingsOpen, setSettingsOpen]       = useState(false)
+  const [page, setPage]                       = useState(1)
+  const [totalPages, setTotalPages]           = useState(1)
   const [searchQuery, setSearchQuery]         = useState('')
   const [searchResults, setSearchResults]     = useState([])
   const [searching, setSearching]             = useState(false)
@@ -150,11 +152,13 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [deadlineModal])
 
-  const load = async (tab) => {
+  const load = async (tab, p = page) => {
     setLoading(true)
     setError(null)
     try {
-      setEmails(await fetchEmails(tab))
+      const result = await fetchEmails(tab, { page: p, limit: 10 })
+      setEmails(result.emails)
+      setTotalPages(result.total_pages)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -167,7 +171,8 @@ export default function App() {
   // mutation — never on a tab switch, so the calendar stays put as you change folders.
   const loadAll = async () => {
     try {
-      setAllEmails(await fetchEmails(null))
+      const result = await fetchEmails(null, { page: 1, limit: 500 })
+      setAllEmails(result.emails)
     } catch (e) {
       setError(e.message)
     }
@@ -176,8 +181,8 @@ export default function App() {
   //Refresh both the tab list and the calendar after a mutation.
   const reload = () => Promise.all([load(activeTab), loadAll()])
 
-  //List re-fetches on tab change or once a session is established.
-  useEffect(() => { if (user) load(activeTab) }, [activeTab, user])
+  //List re-fetches on tab change, page change, or once a session is established.
+  useEffect(() => { if (user) load(activeTab, page) }, [activeTab, page, user])
   //Calendar data loads once per session, NOT on tab change.
   useEffect(() => { if (user) loadAll() }, [user])
 
@@ -297,6 +302,7 @@ export default function App() {
 
   const handleTabClick = (key) => {
     setActiveTab(key)
+    setPage(1)
     setUploadMsg(null)
   }
 
@@ -522,6 +528,22 @@ export default function App() {
             />
           ))}
         </ul>
+      )}
+
+      {!searchQuery.trim() && emails.length > 0 && (
+        <div className="pagination">
+          <button
+            className="page-btn"
+            onClick={() => setPage(p => p - 1)}
+            disabled={page === 1}
+          >← Prev</button>
+          <span className="page-info">Page {page} of {totalPages}</span>
+          <button
+            className="page-btn"
+            onClick={() => setPage(p => p + 1)}
+            disabled={page === totalPages}
+          >Next →</button>
+        </div>
       )}
 
       {menu && (
