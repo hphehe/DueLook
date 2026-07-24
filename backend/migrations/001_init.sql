@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS email_state (
     subject            TEXT NOT NULL,
     received_date      TIMESTAMPTZ,
     body               TEXT NOT NULL,
+    body_html          TEXT,
     source_file        TEXT NOT NULL,
     category           TEXT NOT NULL,
     tab                TEXT NOT NULL,
@@ -27,4 +28,3 @@ CREATE TABLE IF NOT EXISTS email_state (
     pre_delete_tab     TEXT,
     processed_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-

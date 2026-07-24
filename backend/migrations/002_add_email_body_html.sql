@@ -1,0 +1,2 @@
+ALTER TABLE email_state
+ADD COLUMN IF NOT EXISTS body_html TEXT;

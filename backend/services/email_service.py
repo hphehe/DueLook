@@ -58,7 +58,7 @@ def confirm(email_id: str, user_id: str) -> None:
     with get_db() as conn:
         found = email_repository.confirm(conn, email_id, user_id)
     if not found:
-        raise ValueError(f"Email {email_id} not found or not in NEEDS_REVIEW")
+        raise ValueError(f"Email {email_id} has no suggested deadline to confirm")
 
 
 def dismiss(email_id: str, user_id: str) -> None:

@@ -206,6 +206,7 @@ export default function App() {
     try {
       await confirmApi(emailId)
       await reload()
+      setSelectedEmail(null)
     } catch (e) {
       setError(e.message)
     }
@@ -216,6 +217,7 @@ export default function App() {
     try {
       await dismissApi(emailId)
       await reload()
+      setSelectedEmail(null)
     } catch (e) {
       setError(e.message)
     }
@@ -258,7 +260,7 @@ export default function App() {
   const handleOpenDeadline = (email) => {
     setMenu(null)
     setSelectedEmail(null)
-    setDeadlineValue(toDateTimeLocal(email.extracted_deadline))
+    setDeadlineValue(toDateTimeLocal(email.extracted_deadline ?? email.ai_deadline))
     setDeadlineModal({ email })
   }
 
@@ -524,6 +526,7 @@ export default function App() {
               onMarkDone={() => handleMarkDone(e.email_id)}
               onConfirm={() => handleConfirm(e.email_id)}
               onDismiss={() => handleDismiss(e.email_id)}
+              onOpenDeadline={() => handleOpenDeadline(e)}
               onRecover={() => handleRecover(e.email_id)}
             />
           ))}
@@ -581,6 +584,9 @@ export default function App() {
             ? handleContextMenu(ev, selectedEmail)
             : ev.preventDefault()}
           onMarkDone={() => handleMarkDone(selectedEmail.email_id)}
+          onConfirm={() => handleConfirm(selectedEmail.email_id)}
+          onDismiss={() => handleDismiss(selectedEmail.email_id)}
+          onOpenDeadline={() => handleOpenDeadline(selectedEmail)}
         />
       )}
         </>

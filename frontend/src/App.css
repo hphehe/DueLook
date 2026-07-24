@@ -153,3 +153,80 @@ body {
 :root[data-theme='dark'] .page-btn { background: #1e293b; border-color: #334155; color: #9fb0c5; }
 :root[data-theme='dark'] .page-btn:hover:not(:disabled) { background: #19283c; color: #93c5fd; }
 :root[data-theme='dark'] .page-info { color: #9fb0c5; }
+
+/* Needs Review decision support */
+.review-summary {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.7rem;
+  padding: 0.65rem 0.75rem;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.review-summary-title {
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.review-summary-body,
+.review-summary-suggestion {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.review-summary-suggestion {
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.edit-deadline-btn {
+  padding: 0.2rem 0.7rem;
+  color: #475569;
+  background: transparent;
+  border: 1.5px solid #94a3b8;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.edit-deadline-btn:hover {
+  color: #fff;
+  background: #64748b;
+}
+
+.modal-actions.review-actions {
+  padding-top: 0.75rem;
+}
+
+.modal-actions.review-actions button {
+  min-height: 2.25rem;
+  padding: 0.45rem 1rem;
+}
+
+:root[data-theme='dark'] .review-summary {
+  color: #b8c5d6;
+  background: #17243a;
+  border-color: #2a3a50;
+}
+
+:root[data-theme='dark'] .review-summary-title {
+  color: #e2e8f0;
+}
+
+:root[data-theme='dark'] .review-summary-suggestion {
+  color: #93c5fd;
+}

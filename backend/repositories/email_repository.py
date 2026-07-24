@@ -17,8 +17,9 @@ def upsert(conn, email: AnalyzedEmail, user_id: str, record_id: str) -> None:
             """
             INSERT INTO email_state
                 (email_id, user_id, sender, subject, received_date, body, body_html,
-                 source_file, category, tab, extracted_deadline)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 source_file, category, tab, extracted_deadline, ai_tab, ai_deadline,
+                 ai_confidence, review_reason)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (email_id) DO NOTHING
             """,
             (
@@ -33,9 +34,48 @@ def upsert(conn, email: AnalyzedEmail, user_id: str, record_id: str) -> None:
                 email.category,
                 email.tab,
                 email.extracted_deadline,
+                email.ai_tab,
+                email.ai_deadline,
+                email.ai_confidence,
+                email.review_reason,
             ),
         )
 
+
+def update_analysis(
+    conn,
+    email_id: str,
+    user_id: str,
+    email: AnalyzedEmail,
+) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE email_state
+            SET category = %s,
+                tab = CASE WHEN tab = 'DONE' THEN tab ELSE %s END,
+                extracted_deadline = %s,
+                ai_tab = %s,
+                ai_deadline = %s,
+                ai_confidence = %s,
+                review_reason = %s,
+                processed_at = NOW()
+            WHERE email_id = %s AND user_id = %s AND tab != 'BIN'
+            RETURNING email_id
+            """,
+            (
+                email.category,
+                email.tab,
+                email.extracted_deadline,
+                email.ai_tab,
+                email.ai_deadline,
+                email.ai_confidence,
+                email.review_reason,
+                email_id,
+                user_id,
+            ),
+        )
+        return cur.fetchone() is not None
 
 def update_content(
     conn,
@@ -132,11 +172,12 @@ def set_tab(conn, email_id: str, new_tab: str, user_id: str) -> bool:
             """
             UPDATE email_state
             SET tab = %s,
-                extracted_deadline = CASE WHEN %s = 'NO_DEADLINE' THEN NULL ELSE extracted_deadline END
+                extracted_deadline = CASE WHEN %s = 'NO_DEADLINE' THEN NULL ELSE extracted_deadline END,
+                review_reason = CASE WHEN %s = 'NEEDS_REVIEW' THEN review_reason ELSE NULL END
             WHERE email_id = %s AND user_id = %s AND tab != 'BIN'
             RETURNING email_id
             """,
-            (new_tab, new_tab, email_id, user_id),
+            (new_tab, new_tab, new_tab, email_id, user_id),
         )
         return cur.fetchone() is not None
 
@@ -165,11 +206,19 @@ def set_deadline(conn, email_id: str, new_deadline: Optional[str], user_id: str)
                   WHEN tab IN ('MISSED', 'NO_DEADLINE', 'NEEDS_REVIEW') AND %s IS NOT NULL THEN
                     CASE WHEN %s::timestamptz > NOW() THEN 'FILTERED' ELSE 'MISSED' END
                   ELSE tab
-                END
+                END,
+                review_reason = CASE WHEN %s IS NOT NULL THEN NULL ELSE review_reason END
             WHERE email_id = %s AND user_id = %s AND tab != 'BIN'
             RETURNING email_id
             """,
-            (new_deadline, new_deadline, new_deadline, email_id, user_id),
+            (
+                new_deadline,
+                new_deadline,
+                new_deadline,
+                new_deadline,
+                email_id,
+                user_id,
+            ),
         )
         return cur.fetchone() is not None
 
@@ -192,8 +241,14 @@ def confirm(conn, email_id: str, user_id: str) -> bool:
     with conn.cursor() as cur:
         cur.execute(
             """
-            UPDATE email_state SET tab = 'FILTERED'
-            WHERE email_id = %s AND user_id = %s AND tab = 'NEEDS_REVIEW'
+            UPDATE email_state
+            SET tab = CASE WHEN ai_deadline > NOW() THEN 'FILTERED' ELSE 'MISSED' END,
+                extracted_deadline = ai_deadline,
+                review_reason = NULL
+            WHERE email_id = %s
+              AND user_id = %s
+              AND tab = 'NEEDS_REVIEW'
+              AND ai_deadline IS NOT NULL
             RETURNING email_id
             """,
             (email_id, user_id),
@@ -205,7 +260,8 @@ def dismiss(conn, email_id: str, user_id: str) -> bool:
     with conn.cursor() as cur:
         cur.execute(
             """
-            UPDATE email_state SET tab = 'NO_DEADLINE'
+            UPDATE email_state
+            SET tab = 'NO_DEADLINE', extracted_deadline = NULL, review_reason = NULL
             WHERE email_id = %s AND user_id = %s AND tab = 'NEEDS_REVIEW'
             RETURNING email_id
             """,
@@ -253,5 +309,11 @@ def _to_model(row: dict) -> AnalyzedEmail:
         source_file=row["source_file"],
         category=row["category"],
         tab=row["tab"],
-        extracted_deadline=str(row["extracted_deadline"]) if row["extracted_deadline"] else None,
+        extracted_deadline=(
+            str(row["extracted_deadline"]) if row["extracted_deadline"] else None
+        ),
+        ai_tab=row.get("ai_tab"),
+        ai_deadline=str(row["ai_deadline"]) if row.get("ai_deadline") else None,
+        ai_confidence=row.get("ai_confidence"),
+        review_reason=row.get("review_reason"),
     )
