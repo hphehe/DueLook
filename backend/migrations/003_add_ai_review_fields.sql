@@ -1,0 +1,11 @@
+ALTER TABLE email_state
+    ADD COLUMN IF NOT EXISTS ai_tab TEXT;
+
+ALTER TABLE email_state
+    ADD COLUMN IF NOT EXISTS ai_deadline TIMESTAMPTZ;
+
+ALTER TABLE email_state
+    ADD COLUMN IF NOT EXISTS ai_confidence DOUBLE PRECISION;
+
+ALTER TABLE email_state
+    ADD COLUMN IF NOT EXISTS review_reason TEXT;

@@ -1,5 +1,6 @@
 import { TAB_COLORS } from '../constants'
 import { formatDate, senderInitial } from '../utils'
+import ReviewSummary from './ReviewSummary'
 
 export default function EmailCard({
   email,
@@ -8,8 +9,14 @@ export default function EmailCard({
   onMarkDone,
   onConfirm,
   onDismiss,
+  onOpenDeadline,
   onRecover,
 }) {
+  const stopAndRun = (event, action) => {
+    event.stopPropagation()
+    action()
+  }
+
   return (
     <li className="card" onClick={onClick} onContextMenu={onContextMenu}>
       <div className="avatar">{senderInitial(email.sender)}</div>
@@ -29,28 +36,35 @@ export default function EmailCard({
           {email.extracted_deadline && (
             <span className="deadline">Due: {formatDate(email.extracted_deadline)}</span>
           )}
-          {/* stopPropagation: keep action-button clicks from bubbling to <li onClick> (which opens the detail modal). Same applies below. */}
           {email.tab === 'FILTERED' && (
-            <button className="done-btn" onClick={ev => { ev.stopPropagation(); onMarkDone() }}>
+            <button className="done-btn" onClick={event => stopAndRun(event, onMarkDone)}>
               Mark Done
             </button>
           )}
-          {email.tab === 'NEEDS_REVIEW' && (
-            <>
-              <button className="confirm-btn" onClick={ev => { ev.stopPropagation(); onConfirm() }}>
-                Confirm
-              </button>
-              <button className="dismiss-btn" onClick={ev => { ev.stopPropagation(); onDismiss() }}>
-                Dismiss
-              </button>
-            </>
-          )}
           {email.tab === 'BIN' && (
-            <button className="done-btn" onClick={ev => { ev.stopPropagation(); onRecover() }}>
+            <button className="done-btn" onClick={event => stopAndRun(event, onRecover)}>
               Recover
             </button>
           )}
         </div>
+        {email.tab === 'NEEDS_REVIEW' && (
+          <>
+            <ReviewSummary email={email} />
+            <div className="review-actions">
+              {email.ai_deadline && (
+                <button className="confirm-btn" onClick={event => stopAndRun(event, onConfirm)}>
+                  Confirm deadline
+                </button>
+              )}
+              <button className="edit-deadline-btn" onClick={event => stopAndRun(event, onOpenDeadline)}>
+                {email.ai_deadline ? 'Edit deadline' : 'Set deadline'}
+              </button>
+              <button className="dismiss-btn" onClick={event => stopAndRun(event, onDismiss)}>
+                No deadline
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </li>
   )

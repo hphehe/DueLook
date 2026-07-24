@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { TAB_COLORS } from '../constants'
 import { formatDate } from '../utils'
 import EmailBody from './EmailBody'
+import ReviewSummary from './ReviewSummary'
 
 function FullscreenIcon({ expanded }) {
   return expanded ? (
@@ -15,7 +16,15 @@ function FullscreenIcon({ expanded }) {
   )
 }
 
-export default function EmailModal({ email, onClose, onContextMenu, onMarkDone }) {
+export default function EmailModal({
+  email,
+  onClose,
+  onContextMenu,
+  onMarkDone,
+  onConfirm,
+  onDismiss,
+  onOpenDeadline,
+}) {
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   return (
@@ -65,11 +74,27 @@ export default function EmailModal({ email, onClose, onContextMenu, onMarkDone }
             <span className="deadline">Due: {formatDate(email.extracted_deadline)}</span>
           )}
         </div>
+        {email.tab === 'NEEDS_REVIEW' && <ReviewSummary email={email} />}
         <EmailBody html={email.body_html} text={email.body} />
         {email.tab === 'FILTERED' && (
           <div className="modal-actions">
             <button type="button" className="done-btn" onClick={onMarkDone}>
               Mark Done
+            </button>
+          </div>
+        )}
+        {email.tab === 'NEEDS_REVIEW' && (
+          <div className="modal-actions review-actions">
+            {email.ai_deadline && (
+              <button type="button" className="confirm-btn" onClick={onConfirm}>
+                Confirm deadline
+              </button>
+            )}
+            <button type="button" className="edit-deadline-btn" onClick={onOpenDeadline}>
+              {email.ai_deadline ? 'Edit deadline' : 'Set deadline'}
+            </button>
+            <button type="button" className="dismiss-btn" onClick={onDismiss}>
+              No deadline
             </button>
           </div>
         )}
