@@ -10,7 +10,7 @@ export default function DateListModal({ open, date, emails = [], onClose, onEmai
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Deadlines for {formattedDate}</h3>
-          <button onClick={onClose}>Close</button>
+          <button className="date-modal-close" onClick={onClose}>Close</button>
         </div>
         <div className="modal-body">
           {emails.length === 0 ? (

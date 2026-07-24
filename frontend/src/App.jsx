@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   fetchEmails,
+  searchEmails,
   markDoneApi,
   confirmApi,
   dismissApi,
@@ -63,6 +64,10 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(null)
   const [dateModalEmails, setDateModalEmails] = useState([])
   const [settingsOpen, setSettingsOpen]       = useState(false)
+  const [searchQuery, setSearchQuery]         = useState('')
+  const [searchResults, setSearchResults]     = useState([])
+  const [searching, setSearching]             = useState(false)
+  const searchTimer = useRef(null)
   const fileRef = useRef()
   const allEmailsCountRef = useRef(0)
   useEffect(() => { allEmailsCountRef.current = allEmails.length }, [allEmails.length])
@@ -295,6 +300,23 @@ export default function App() {
     setUploadMsg(null)
   }
 
+  const handleSearchChange = (value) => {
+    setSearchQuery(value)
+    clearTimeout(searchTimer.current)
+    if (!value.trim()) { setSearchResults([]); setSearching(false); return }
+    setSearching(true)
+    searchTimer.current = setTimeout(async () => {
+      try {
+        const results = await searchEmails(value.trim())
+        setSearchResults(results)
+      } catch {
+        setSearchResults([])
+      } finally {
+        setSearching(false)
+      }
+    }, 400)
+  }
+
   const handleSyncGmail = async () => {
     setSyncing(true)
     setUploadMsg(null)
@@ -432,6 +454,8 @@ export default function App() {
         syncing={syncing}
         onSyncGmail={handleSyncGmail}
         hasGmail={user?.has_gmail ?? false}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
       />
 
       {uploadMsg && <div className="banner success">{uploadMsg}</div>}
@@ -458,7 +482,28 @@ export default function App() {
         />
       )}
 
-      {loading ? (
+      {searchQuery.trim() ? (
+        searching ? (
+          <div className="empty">Searching…</div>
+        ) : searchResults.length === 0 ? (
+          <div className="empty">No emails match "{searchQuery}".</div>
+        ) : (
+          <ul className="email-list">
+            {searchResults.map(e => (
+              <EmailCard
+                key={e.email_id}
+                email={e}
+                onClick={() => setSelectedEmail(e)}
+                onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
+                onMarkDone={() => handleMarkDone(e.email_id)}
+                onConfirm={() => handleConfirm(e.email_id)}
+                onDismiss={() => handleDismiss(e.email_id)}
+                onRecover={() => handleRecover(e.email_id)}
+              />
+            ))}
+          </ul>
+        )
+      ) : loading ? (
         <div className="empty">Loading…</div>
       ) : emails.length === 0 ? (
         <div className="empty">No emails here yet. Import a .eml file to get started.</div>

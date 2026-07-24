@@ -32,6 +32,11 @@ def import_email(file_bytes: bytes, filename: str, user_id: str) -> ImportResult
         return ImportResult(email=analyzed, is_duplicate=False)
 
 
+def search_emails(query: str, user_id: str) -> list[AnalyzedEmail]:
+    with get_db() as conn:
+        return email_repository.search(conn, query, user_id)
+
+
 def list_emails(tab: Optional[str], user_id: str) -> list[AnalyzedEmail]:
     with get_db() as conn:
         email_repository.mark_missed(conn, user_id)

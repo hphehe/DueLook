@@ -1,8 +1,16 @@
 import { TABS } from '../constants'
 
-export default function Toolbar({ activeTab, onTabClick, uploading, fileRef, onFileChange, syncing, onSyncGmail, hasGmail }) {
+export default function Toolbar({ activeTab, onTabClick, uploading, fileRef, onFileChange, syncing, onSyncGmail, hasGmail, searchQuery, onSearchChange }) {
   return (
     <div className="toolbar">
+      <input
+        className="search-input"
+        type="search"
+        placeholder="Search emails…"
+        value={searchQuery}
+        onChange={e => onSearchChange(e.target.value)}
+      />
+      <div className="toolbar-bottom">
       <div className="tabs">
         {TABS.map(t => (
           <button
@@ -39,6 +47,7 @@ export default function Toolbar({ activeTab, onTabClick, uploading, fileRef, onF
           style={{ display: 'none' }}
           onChange={onFileChange}
         />
+      </div>
       </div>
     </div>
   )

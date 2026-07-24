@@ -92,6 +92,23 @@ def get_all(conn, tab: Optional[str], user_id: str) -> list[AnalyzedEmail]:
         return [_to_model(dict(zip(cols, row))) for row in cur.fetchall()]
 
 
+def search(conn, query: str, user_id: str) -> list[AnalyzedEmail]:
+    pattern = f"%{query}%"
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT * FROM email_state
+            WHERE user_id = %s AND tab != 'BIN'
+              AND (sender ILIKE %s OR subject ILIKE %s OR body ILIKE %s)
+            ORDER BY processed_at DESC
+            LIMIT 50
+            """,
+            (user_id, pattern, pattern, pattern),
+        )
+        cols = [d[0] for d in cur.description]
+        return [_to_model(dict(zip(cols, row))) for row in cur.fetchall()]
+
+
 def set_tab(conn, email_id: str, new_tab: str, user_id: str) -> bool:
     with conn.cursor() as cur:
         cur.execute(

@@ -85,6 +85,10 @@ export async function fetchCurrentUser() {
 }
 
 // ── Emails ──
+export function searchEmails(q) {
+  return authedJson(`/emails/search?q=${encodeURIComponent(q)}`)
+}
+
 export function fetchEmails(tab) {
   const url = tab ? `/emails?tab=${tab}` : '/emails'
   return authedJson(url)

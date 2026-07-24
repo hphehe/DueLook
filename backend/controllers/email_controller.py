@@ -29,6 +29,11 @@ async def import_email(file: UploadFile = File(...), current_user=Depends(_curre
     return email_service.import_email(content, file.filename or "", current_user.user_id)
 
 
+@router.get("/search", response_model=list[AnalyzedEmail])
+def search_emails(q: str = Query(..., min_length=1), current_user=Depends(_current_user)):
+    return email_service.search_emails(q, current_user.user_id)
+
+
 @router.get("", response_model=list[AnalyzedEmail])
 def list_emails(tab: Optional[str] = Query(None), current_user=Depends(_current_user)):
     return email_service.list_emails(tab, current_user.user_id)
