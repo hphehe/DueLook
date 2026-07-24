@@ -56,13 +56,13 @@ class TestList:
     def test_list_returns_imported_email(self, client, auth_headers, mock_llm, imported_email):
         resp = client.get("/emails", headers=auth_headers)
         assert resp.status_code == 200
-        ids = [e["email_id"] for e in resp.json()]
+        ids = [e["email_id"] for e in resp.json()["emails"]]
         assert imported_email["email_id"] in ids
 
     def test_list_filtered_by_tab(self, client, auth_headers, mock_llm, imported_email):
         resp = client.get("/emails?tab=FILTERED", headers=auth_headers)
         assert resp.status_code == 200
-        assert all(e["tab"] == "FILTERED" for e in resp.json())
+        assert all(e["tab"] == "FILTERED" for e in resp.json()["emails"])
 
     def test_list_requires_auth(self, client):
         assert client.get("/emails").status_code == 401
@@ -71,7 +71,7 @@ class TestList:
         self, client, auth_headers, mock_llm, imported_email, another_user
     ):
         resp = client.get("/emails", headers=another_user["headers"])
-        ids = [e["email_id"] for e in resp.json()]
+        ids = [e["email_id"] for e in resp.json()["emails"]]
         assert imported_email["email_id"] not in ids
 
 
@@ -80,7 +80,7 @@ class TestMarkDone:
         email_id = imported_email["email_id"]
         resp = client.post(f"/emails/{email_id}/done", headers=auth_headers)
         assert resp.status_code == 204
-        done = client.get("/emails?tab=DONE", headers=auth_headers).json()
+        done = client.get("/emails?tab=DONE", headers=auth_headers).json()["emails"]
         assert any(e["email_id"] == email_id for e in done)
 
     def test_mark_done_requires_auth(self, client, mock_llm, imported_email):
@@ -102,7 +102,7 @@ class TestDeleteAndRecover:
         email_id = imported_email["email_id"]
         resp = client.post(f"/emails/{email_id}/delete", headers=auth_headers)
         assert resp.status_code == 204
-        bin_emails = client.get("/emails?tab=BIN", headers=auth_headers).json()
+        bin_emails = client.get("/emails?tab=BIN", headers=auth_headers).json()["emails"]
         assert any(e["email_id"] == email_id for e in bin_emails)
 
     def test_recover_restores_from_bin(self, client, auth_headers, mock_llm, imported_email):
@@ -111,7 +111,7 @@ class TestDeleteAndRecover:
         resp = client.post(f"/emails/{email_id}/recover", headers=auth_headers)
         assert resp.status_code == 204
         #Should no longer appear in BIN
-        bin_emails = client.get("/emails?tab=BIN", headers=auth_headers).json()
+        bin_emails = client.get("/emails?tab=BIN", headers=auth_headers).json()["emails"]
         assert not any(e["email_id"] == email_id for e in bin_emails)
 
     def test_delete_wrong_user_returns_404(
@@ -153,7 +153,7 @@ class TestSetDeadline:
             headers=auth_headers,
         )
         assert resp.status_code == 204
-        emails = client.get("/emails", headers=auth_headers).json()
+        emails = client.get("/emails", headers=auth_headers).json()["emails"]
         matched = next(e for e in emails if e["email_id"] == email_id)
         assert matched["extracted_deadline"] is not None
         assert "2026-12-31" in matched["extracted_deadline"]
@@ -163,6 +163,6 @@ class TestSetDeadline:
         client.post(f"/emails/{email_id}/set-deadline", json={"deadline": "2026-12-31T23:59:00"}, headers=auth_headers)
         resp = client.post(f"/emails/{email_id}/set-deadline", json={"deadline": None}, headers=auth_headers)
         assert resp.status_code == 204
-        emails = client.get("/emails", headers=auth_headers).json()
+        emails = client.get("/emails", headers=auth_headers).json()["emails"]
         matched = next(e for e in emails if e["email_id"] == email_id)
         assert matched["extracted_deadline"] is None

@@ -35,7 +35,7 @@ class TestRegisterImportAndManage:
             #List - email appears
             resp = client.get("/emails", headers=headers)
             assert resp.status_code == 200
-            assert any(e["email_id"] == email_id for e in resp.json())
+            assert any(e["email_id"] == email_id for e in resp.json()["emails"])
 
             #Mark done
             resp = client.post(f"/emails/{email_id}/done", headers=headers)
@@ -43,18 +43,18 @@ class TestRegisterImportAndManage:
 
             #Verify in DONE tab
             resp = client.get("/emails?tab=DONE", headers=headers)
-            assert any(e["email_id"] == email_id for e in resp.json())
+            assert any(e["email_id"] == email_id for e in resp.json()["emails"])
 
             #Delete (move to BIN)
             resp = client.post(f"/emails/{email_id}/delete", headers=headers)
             assert resp.status_code == 204
-            bin_emails = client.get("/emails?tab=BIN", headers=headers).json()
+            bin_emails = client.get("/emails?tab=BIN", headers=headers).json()["emails"]
             assert any(e["email_id"] == email_id for e in bin_emails)
 
             #Recover
             resp = client.post(f"/emails/{email_id}/recover", headers=headers)
             assert resp.status_code == 204
-            bin_emails = client.get("/emails?tab=BIN", headers=headers).json()
+            bin_emails = client.get("/emails?tab=BIN", headers=headers).json()["emails"]
             assert not any(e["email_id"] == email_id for e in bin_emails)
 
         finally:
@@ -90,14 +90,14 @@ class TestRegisterImportAndManage:
             assert resp.status_code == 204
 
             #Verify deadline stored
-            emails = client.get("/emails", headers=headers).json()
+            emails = client.get("/emails", headers=headers).json()["emails"]
             matched = next(e for e in emails if e["email_id"] == email_id)
             assert matched["extracted_deadline"] is not None
             assert "2026-12-15" in matched["extracted_deadline"]
 
             #Clear deadline
             client.post(f"/emails/{email_id}/set-deadline", json={"deadline": None}, headers=headers)
-            emails = client.get("/emails", headers=headers).json()
+            emails = client.get("/emails", headers=headers).json()["emails"]
             matched = next(e for e in emails if e["email_id"] == email_id)
             assert matched["extracted_deadline"] is None
 
@@ -126,7 +126,7 @@ class TestRegisterImportAndManage:
                     assert resp.json()["is_duplicate"] is True
 
             #Only one record in the DB
-            all_emails = client.get("/emails", headers=headers).json()
+            all_emails = client.get("/emails", headers=headers).json()["emails"]
             subjects = [e["subject"] for e in all_emails if e["subject"] == "Idempotency check"]
             assert len(subjects) == 1
 
@@ -160,7 +160,7 @@ class TestRegisterImportAndManage:
             email_id = resp.json()["email"]["email_id"]
 
             # B cannot see it
-            b_emails = client.get("/emails", headers=headers_b).json()
+            b_emails = client.get("/emails", headers=headers_b).json()["emails"]
             assert not any(e["email_id"] == email_id for e in b_emails)
 
             # B cannot act on it
