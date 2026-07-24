@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 
-os.environ.setdefault("GROQ_API_KEY", "test-key")
+os.environ.setdefault("OPENAI_API_KEY", "test-key")
 
 from main import app          
 from db import get_db        

@@ -2,11 +2,11 @@ import os
 import json
 import re
 from dotenv import load_dotenv
-from groq import Groq
+from openai import OpenAI
 from schemas import EmailRecord, AnalyzedEmail
 
 load_dotenv()
-client = Groq(api_key=os.environ["GROQ_API_KEY"])
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 PROMPT = """You are an email classifier for a university student.
 
@@ -47,7 +47,7 @@ def analyze(record: EmailRecord) -> AnalyzedEmail:
         body=record.body,
     )
     response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="gpt-5.4-nano",
         messages=[{"role": "user", "content": prompt}],
     )
     raw = response.choices[0].message.content.strip()
