@@ -25,6 +25,8 @@ def _analysis(**overrides) -> LLMAnalysisResponse:
         category="Academics",
         tab="FILTERED",
         extracted_deadline="2026-07-01T23:59:00",
+        confidence=0.9,
+        review_reason="NONE",
     )
     defaults.update(overrides)
     return LLMAnalysisResponse(**defaults)
@@ -44,6 +46,8 @@ def test_llm_schema_is_strict_and_requires_every_field():
         "category",
         "tab",
         "extracted_deadline",
+        "confidence",
+        "review_reason",
     }
 
 
