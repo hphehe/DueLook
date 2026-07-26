@@ -85,9 +85,14 @@ export async function fetchCurrentUser() {
 }
 
 // ── Emails ──
-export function fetchEmails(tab) {
-  const url = tab ? `/emails?tab=${tab}` : '/emails'
-  return authedJson(url)
+export function searchEmails(q) {
+  return authedJson(`/emails/search?q=${encodeURIComponent(q)}`)
+}
+
+export function fetchEmails(tab, { page = 1, limit = 20 } = {}) {
+  const params = new URLSearchParams({ page, limit })
+  if (tab) params.set('tab', tab)
+  return authedJson(`/emails?${params}`)
 }
 
 export function markDoneApi(emailId) {

@@ -1,4 +1,5 @@
 import { TAB_COLORS } from '../constants'
+import './EmailCard.css'
 import { formatDate, senderInitial } from '../utils'
 import ReviewSummary from './ReviewSummary'
 

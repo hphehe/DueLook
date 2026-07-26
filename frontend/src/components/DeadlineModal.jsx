@@ -1,3 +1,5 @@
+import './DeadlineModal.css'
+
 export default function DeadlineModal({ email, value, onChange, onSave, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>

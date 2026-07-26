@@ -1,4 +1,5 @@
 import { TAB_LABELS, getStatusOptions } from '../constants'
+import './ContextMenu.css'
 
 export default function ContextMenu({ menu, onSetTab, onOpenDeadline, onDelete }) {
   return (

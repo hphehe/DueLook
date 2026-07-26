@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import './EmailModal.css'
 import { TAB_COLORS } from '../constants'
 import { formatDate } from '../utils'
 import EmailBody from './EmailBody'

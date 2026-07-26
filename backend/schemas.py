@@ -109,3 +109,11 @@ class SyncResult(BaseModel):
     imported: int
     skipped: int
     updated: int = 0
+
+
+class PaginatedEmailsResult(BaseModel):
+    emails: list[AnalyzedEmail]
+    total: int
+    page: int
+    limit: int
+    total_pages: int

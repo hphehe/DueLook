@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   fetchEmails,
+  searchEmails,
   markDoneApi,
   confirmApi,
   dismissApi,
@@ -66,6 +67,13 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(null)
   const [dateModalEmails, setDateModalEmails] = useState([])
   const [settingsOpen, setSettingsOpen]       = useState(false)
+  const [emails, setEmails]                   = useState([])
+  const [page, setPage]                       = useState(1)
+  const [totalPages, setTotalPages]           = useState(1)
+  const [searchQuery, setSearchQuery]         = useState('')
+  const [searchResults, setSearchResults]     = useState([])
+  const [searching, setSearching]             = useState(false)
+  const searchTimer = useRef(null)
   const [panicDays, setPanicDays]             = useState(() => {
     const saved = localStorage.getItem('duelook_panic_days')
     return saved ? Number(saved) : 2
@@ -158,11 +166,13 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [deadlineModal])
 
-  const loadAll = async () => {
+  const load = async (tab, p = page) => {
     setLoading(true)
     setError(null)
     try {
-      setAllEmails(await fetchEmails(null))
+      const result = await fetchEmails(tab, { page: p, limit: 10 })
+      setEmails(result.emails)
+      setTotalPages(result.total_pages)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -170,28 +180,19 @@ export default function App() {
     }
   }
 
-  // Refresh calendar & all emails after a mutation.
-  const reload = () => loadAll()
+  const loadAll = async () => {
+    try {
+      const result = await fetchEmails(null, { page: 1, limit: 500 })
+      setAllEmails(result.emails)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
 
-  // Calendar and tab data load once per session. Tab switching derives from allEmails on the client.
+  const reload = () => Promise.all([load(activeTab), loadAll()])
+
+  useEffect(() => { if (user) load(activeTab, page) }, [activeTab, page, user])
   useEffect(() => { if (user) loadAll() }, [user])
-
-  useEffect(() => {
-    if (!user || activeTab !== 'BIN') return
-    let current = true
-    fetchEmails('BIN')
-      .then(result => { if (current) setBinEmails(result) })
-      .catch(e => { if (current) setError(e.message) })
-      .finally(() => { if (current) setLoading(false) })
-    return () => { current = false }
-  }, [activeTab, user])
-
-  // Active tab email list derived directly from allEmails (instant tab switching, 0ms latency)
-  const emails = activeTab === 'BIN'
-    ? binEmails
-    : activeTab
-      ? allEmails.filter(e => e.tab === activeTab)
-      : allEmails
 
 
   // Every non-BIN email that carries a deadline, drawn from the tab-independent set.
@@ -335,7 +336,25 @@ export default function App() {
   const handleTabClick = (key) => {
     if (key !== activeTab) setLoading(key === 'BIN')
     setActiveTab(key)
+    setPage(1)
     setUploadMsg(null)
+  }
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value)
+    clearTimeout(searchTimer.current)
+    if (!value.trim()) { setSearchResults([]); setSearching(false); return }
+    setSearching(true)
+    searchTimer.current = setTimeout(async () => {
+      try {
+        const results = await searchEmails(value.trim())
+        setSearchResults(results)
+      } catch {
+        setSearchResults([])
+      } finally {
+        setSearching(false)
+      }
+    }, 400)
   }
 
   const handleSyncGmail = async () => {
@@ -520,13 +539,36 @@ export default function App() {
                 syncing={syncing}
                 onSyncGmail={handleSyncGmail}
                 hasGmail={user?.has_gmail ?? false}
+                searchQuery={searchQuery}
+                onSearchChange={handleSearchChange}
               />
 
               {uploadMsg && <div className="banner success">{uploadMsg}</div>}
               {error     && <div className="banner error">{error}</div>}
 
               <div className="app-split__email-scroll">
-                {loading ? (
+                {searchQuery.trim() ? (
+                  searching ? (
+                    <div className="empty">Searching…</div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="empty">No emails match "{searchQuery}".</div>
+                  ) : (
+                    <ul className="email-list">
+                      {searchResults.map(e => (
+                        <EmailCard
+                          key={e.email_id}
+                          email={e}
+                          onClick={() => setSelectedEmail(e)}
+                          onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
+                          onMarkDone={() => handleMarkDone(e.email_id)}
+                          onConfirm={() => handleConfirm(e.email_id)}
+                          onDismiss={() => handleDismiss(e.email_id)}
+                          onRecover={() => handleRecover(e.email_id)}
+                        />
+                      ))}
+                    </ul>
+                  )
+                ) : loading ? (
                   <div className="empty">Loading…</div>
                 ) : emails.length === 0 ? (
                   <div className="empty">No emails here yet. Import a .eml file to get started.</div>
@@ -546,6 +588,22 @@ export default function App() {
                       />
                     ))}
                   </ul>
+                )}
+
+                {!searchQuery.trim() && (
+                  <div className="pagination">
+                    <button
+                      className="page-btn"
+                      onClick={() => setPage(p => p - 1)}
+                      disabled={page === 1}
+                    >← Prev</button>
+                    <span className="page-info">Page {page} of {totalPages}</span>
+                    <button
+                      className="page-btn"
+                      onClick={() => setPage(p => p + 1)}
+                      disabled={page === totalPages}
+                    >Next →</button>
+                  </div>
                 )}
               </div>
             </div>
