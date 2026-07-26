@@ -28,7 +28,9 @@ import DateListModal from './components/DateListModal'
 import Footer from './components/Footer'
 import AccountMenu from './components/AccountMenu'
 import SettingsPanel from './components/SettingsPanel'
-import { format, parseISO } from 'date-fns'
+import PanicBoard from './components/PanicBoard'
+import { format, parseISO, addDays, isBefore } from 'date-fns'
+
 
 function gmailSyncMessage(result, prefix = 'Synced') {
   const changes = []
@@ -49,8 +51,8 @@ export default function App() {
   const [user, setUser]                   = useState(null)
   const [booting, setBooting]             = useState(true)
   const [activeTab, setActiveTab]         = useState(null)
-  const [emails, setEmails]               = useState([])
   const [allEmails, setAllEmails]         = useState([])
+
   const [loading, setLoading]             = useState(true)
   const [uploading, setUploading]         = useState(false)
   const [syncing, setSyncing]             = useState(false)
@@ -63,8 +65,18 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(null)
   const [dateModalEmails, setDateModalEmails] = useState([])
   const [settingsOpen, setSettingsOpen]       = useState(false)
+  const [panicDays, setPanicDays]             = useState(() => {
+    const saved = localStorage.getItem('duelook_panic_days')
+    return saved ? Number(saved) : 2
+  })
   const fileRef = useRef()
   const allEmailsCountRef = useRef(0)
+
+  const handlePanicDaysChange = (days) => {
+    setPanicDays(days)
+    localStorage.setItem('duelook_panic_days', String(days))
+  }
+
   useEffect(() => { allEmailsCountRef.current = allEmails.length }, [allEmails.length])
 
   useEffect(() => applyTheme(theme), [theme])
@@ -145,11 +157,11 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [deadlineModal])
 
-  const load = async (tab) => {
+  const loadAll = async () => {
     setLoading(true)
     setError(null)
     try {
-      setEmails(await fetchEmails(tab))
+      setAllEmails(await fetchEmails(null))
     } catch (e) {
       setError(e.message)
     } finally {
@@ -157,27 +169,41 @@ export default function App() {
     }
   }
 
-  // The calendar reflects ALL deadlines, independent of the active tab. fetchEmails(null)
-  // returns every non-BIN email, so this loads once per session and refreshes only after a
-  // mutation — never on a tab switch, so the calendar stays put as you change folders.
-  const loadAll = async () => {
-    try {
-      setAllEmails(await fetchEmails(null))
-    } catch (e) {
-      setError(e.message)
-    }
-  }
+  // Refresh calendar & all emails after a mutation.
+  const reload = () => loadAll()
 
-  //Refresh both the tab list and the calendar after a mutation.
-  const reload = () => Promise.all([load(activeTab), loadAll()])
-
-  //List re-fetches on tab change or once a session is established.
-  useEffect(() => { if (user) load(activeTab) }, [activeTab, user])
-  //Calendar data loads once per session, NOT on tab change.
+  // Calendar and tab data load once per session. Tab switching derives from allEmails on the client.
   useEffect(() => { if (user) loadAll() }, [user])
+
+  // Active tab email list derived directly from allEmails (instant tab switching, 0ms latency)
+  const emails = activeTab
+    ? allEmails.filter(e => e.tab === activeTab)
+    : allEmails
+
 
   // Every non-BIN email that carries a deadline, drawn from the tab-independent set.
   const deadlineEmails = allEmails.filter(e => e.extracted_deadline && e.tab !== 'BIN')
+
+  // Emails due within the Panic Window (or overdue), excluding DONE and BIN tabs.
+  const panicEmails = allEmails
+    .filter(e => {
+      if (!e.extracted_deadline || e.tab === 'BIN' || e.tab === 'DONE') return false
+      try {
+        const d = parseISO(e.extracted_deadline)
+        const cutoff = addDays(new Date(), panicDays)
+        return isBefore(d, cutoff)
+      } catch {
+        return false
+      }
+    })
+    .sort((a, b) => {
+      try {
+        return parseISO(a.extracted_deadline) - parseISO(b.extracted_deadline)
+      } catch {
+        return 0
+      }
+    })
+
 
   const handleMarkDone = async (emailId) => {
     setError(null)
@@ -303,6 +329,7 @@ export default function App() {
     setError(null)
     try {
       const result = await syncGmail()
+      localStorage.setItem('duelook_last_sync', String(Date.now()))
       setUploadMsg(gmailSyncMessage(result))
       if (result.imported + (result.updated ?? 0) > 0) await reload()
     } catch (e) {
@@ -313,9 +340,14 @@ export default function App() {
   }
 
   const silentSync = async () => {
+    const lastSync = Number(localStorage.getItem('duelook_last_sync') || 0)
+    const now = Date.now()
+    if (now - lastSync < 5 * 60 * 1000) return // Skip auto-sync if synced in the last 5 minutes
+
     setSyncing(true)
     try {
       const result = await syncGmail()
+      localStorage.setItem('duelook_last_sync', String(now))
       if (result.imported + (result.updated ?? 0) > 0) {
         setUploadMsg(gmailSyncMessage(result, 'Auto-synced'))
         await reload()
@@ -326,6 +358,7 @@ export default function App() {
       setSyncing(false)
     }
   }
+
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
@@ -352,8 +385,8 @@ export default function App() {
   const handleLogout = () => {
     clearToken()
     setUser(null)
-    setEmails([])
     setAllEmails([])
+
     setActiveTab(null)
     setError(null)
     setUploadMsg(null)
@@ -419,67 +452,85 @@ export default function App() {
           statusMessage={uploadMsg}
           error={error}
           theme={theme}
+          panicDays={panicDays}
           onBack={() => setSettingsOpen(false)}
           onSyncGmail={handleSyncGmail}
           onThemeChange={setTheme}
+          onPanicDaysChange={handlePanicDaysChange}
         />
       ) : (
-        <>
-      <Toolbar
-        activeTab={activeTab}
-        onTabClick={handleTabClick}
-        uploading={uploading}
-        fileRef={fileRef}
-        onFileChange={handleFileChange}
-        syncing={syncing}
-        onSyncGmail={handleSyncGmail}
-        hasGmail={user?.has_gmail ?? false}
-      />
+        <div className="app-split">
+          <aside className="app-split__sidebar">
+            {allEmails.length > 0 && (
+              <Calendar
+                compact
+                emails={deadlineEmails}
+                onDateClick={(date) => {
+                  setSelectedDate(date)
+                  const key = format(date, 'yyyy-MM-dd')
+                  const matched = deadlineEmails.filter(e => {
+                    if (!e.extracted_deadline) return false
+                    try {
+                      const d = parseISO(e.extracted_deadline)
+                      const ek = format(d, 'yyyy-MM-dd')
+                      return ek === key
+                    } catch (err) {
+                      return (e.extracted_deadline || '').startsWith(key)
+                    }
+                  })
+                  setDateModalEmails(matched)
+                }}
+              />
+            )}
 
-      {uploadMsg && <div className="banner success">{uploadMsg}</div>}
-      {error     && <div className="banner error">{error}</div>}
-
-      {allEmails.length > 0 && (
-        <Calendar
-          emails={deadlineEmails}
-          onDateClick={(date) => {
-            setSelectedDate(date)
-            const key = format(date, 'yyyy-MM-dd')
-            const matched = deadlineEmails.filter(e => {
-              if (!e.extracted_deadline) return false
-              try {
-                const d = parseISO(e.extracted_deadline)
-                const ek = format(d, 'yyyy-MM-dd')
-                return ek === key
-              } catch (err) {
-                return (e.extracted_deadline || '').startsWith(key)
-              }
-            })
-            setDateModalEmails(matched)
-          }}
-        />
-      )}
-
-      {loading ? (
-        <div className="empty">Loading…</div>
-      ) : emails.length === 0 ? (
-        <div className="empty">No emails here yet. Import a .eml file to get started.</div>
-      ) : (
-        <ul className="email-list">
-          {emails.map(e => (
-            <EmailCard
-              key={e.email_id}
-              email={e}
-              onClick={() => setSelectedEmail(e)}
-              onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
-              onMarkDone={() => handleMarkDone(e.email_id)}
-              onConfirm={() => handleConfirm(e.email_id)}
-              onDismiss={() => handleDismiss(e.email_id)}
-              onOpenDeadline={() => handleOpenDeadline(e)}
-              onRecover={() => handleRecover(e.email_id)}
+            <PanicBoard
+              emails={panicEmails}
+              panicDays={panicDays}
+              onEmailClick={setSelectedEmail}
+              onMarkDone={handleMarkDone}
+              onOpenDeadline={handleOpenDeadline}
+              onContextMenu={handleContextMenu}
             />
-          ))}
-        </ul>
+          </aside>
+
+          <section className="app-split__stream">
+            <Toolbar
+              activeTab={activeTab}
+              onTabClick={handleTabClick}
+              uploading={uploading}
+              fileRef={fileRef}
+              onFileChange={handleFileChange}
+              syncing={syncing}
+              onSyncGmail={handleSyncGmail}
+              hasGmail={user?.has_gmail ?? false}
+            />
+
+            {uploadMsg && <div className="banner success">{uploadMsg}</div>}
+            {error     && <div className="banner error">{error}</div>}
+
+            {loading ? (
+              <div className="empty">Loading…</div>
+            ) : emails.length === 0 ? (
+              <div className="empty">No emails here yet. Import a .eml file to get started.</div>
+            ) : (
+              <ul className="email-list">
+                {emails.map(e => (
+                  <EmailCard
+                    key={e.email_id}
+                    email={e}
+                    onClick={() => setSelectedEmail(e)}
+                    onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
+                    onMarkDone={() => handleMarkDone(e.email_id)}
+                    onConfirm={() => handleConfirm(e.email_id)}
+                    onDismiss={() => handleDismiss(e.email_id)}
+                    onOpenDeadline={() => handleOpenDeadline(e)}
+                    onRecover={() => handleRecover(e.email_id)}
+                  />
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       )}
 
       {menu && (
@@ -522,10 +573,9 @@ export default function App() {
           onOpenDeadline={() => handleOpenDeadline(selectedEmail)}
         />
       )}
-        </>
-      )}
     </div>
     <Footer />
     </>
   )
 }
+

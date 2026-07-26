@@ -27,6 +27,14 @@
 .syncButton:hover:not(:disabled) { filter: brightness(0.96); }
 .syncButton:disabled { cursor: wait; opacity: 0.65; }
 
+.panicTrigger { display: inline-flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 38px; padding: 0.4rem 0.75rem; background: var(--ui-surface); border: 1px solid var(--ui-border-strong); border-radius: 9px; color: var(--ui-text); font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+.panicTrigger:hover { background: var(--ui-surface-subtle); }
+.chevron { font-size: 0.7rem; color: var(--ui-muted); }
+.panicDropdown { min-width: 130px; padding: 0.35rem; }
+.panicOption { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 34px; padding: 0.35rem 0.6rem; border: none; border-radius: 6px; background: transparent; color: var(--ui-text); font: inherit; font-size: 0.82rem; font-weight: 500; cursor: pointer; text-align: left; }
+.panicOption:hover, .panicOption:focus-visible { background: var(--ui-surface-hover); outline: none; }
+.panicOption[aria-checked='true'] { color: var(--ui-accent); font-weight: 700; }
+
 @media (max-width: 520px) {
   .connectionHeading { align-items: flex-start; flex-direction: column; }
   .syncButton { width: 100%; }
@@ -35,3 +43,4 @@
 @media (prefers-reduced-motion: reduce) {
   .switch, .switch span { transition: none; }
 }
+

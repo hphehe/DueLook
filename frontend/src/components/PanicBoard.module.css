@@ -1,0 +1,218 @@
+.panicBoard {
+  display: flex;
+  flex-direction: column;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0;
+  color: var(--ui-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.windowBadge {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--ui-surface-hover);
+  color: var(--ui-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.countBadge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--ui-surface-subtle);
+  color: var(--ui-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.countActive {
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  color: #d97706;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--ui-surface-subtle);
+  border: 1px solid var(--ui-border);
+  border-left: 3px solid #f59e0b;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+
+.card:hover {
+  background: var(--ui-surface-hover);
+  transform: translateY(-1px);
+}
+
+.overdueCard {
+  border-left-color: #ef4444;
+  background: color-mix(in srgb, #ef4444 4%, var(--ui-surface-subtle));
+}
+
+.cardMain {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.subject {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--ui-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.countdown {
+  flex: 0 0 auto;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.urgentBadge {
+  background: color-mix(in srgb, #f59e0b 20%, transparent);
+  color: #b45309;
+}
+
+.overdueBadge {
+  background: color-mix(in srgb, #ef4444 20%, transparent);
+  color: #b91c1c;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.73rem;
+  color: var(--ui-muted);
+}
+
+.sender {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.category {
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  background: var(--ui-border);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.actionButton {
+  min-height: 28px;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 6px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 100ms ease;
+}
+
+.actionButton:hover {
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-accent);
+  color: var(--ui-accent);
+}
+
+.actionSecondary {
+  color: var(--ui-muted);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 1.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ui-text);
+}
+
+.emptySubtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.76rem;
+  color: var(--ui-muted);
+}
