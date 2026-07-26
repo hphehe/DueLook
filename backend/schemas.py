@@ -4,6 +4,19 @@ from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
+def normalize_floating_datetime(value: Optional[str]) -> Optional[str]:
+    """Return an ISO wall-clock value while deliberately discarding timezone data."""
+    if value is None:
+        return None
+    if "T" not in value and " " not in value:
+        raise ValueError("Deadline must include an ISO 8601 time")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("Deadline must be an ISO 8601 datetime") from exc
+    return parsed.replace(tzinfo=None).isoformat(timespec="seconds")
+
+
 class EmailRecord(BaseModel):
     email_id: str
     sender: str
@@ -47,15 +60,7 @@ class LLMAnalysisResponse(BaseModel):
     @field_validator("extracted_deadline")
     @classmethod
     def validate_deadline_format(cls, value: Optional[str]) -> Optional[str]:
-        if value is None:
-            return value
-        if "T" not in value and " " not in value:
-            raise ValueError("Deadline must include an ISO 8601 time")
-        try:
-            datetime.fromisoformat(value.replace("Z", "+00:00"))
-        except ValueError as exc:
-            raise ValueError("Deadline must be an ISO 8601 datetime") from exc
-        return value
+        return normalize_floating_datetime(value)
 
     @model_validator(mode="after")
     def validate_fields_match_tab(self) -> "LLMAnalysisResponse":
@@ -81,6 +86,11 @@ class SetTabRequest(BaseModel):
 
 class SetDeadlineRequest(BaseModel):
     deadline: Optional[str] = None
+
+    @field_validator("deadline")
+    @classmethod
+    def validate_deadline(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_floating_datetime(value)
 
 
 class RegisterRequest(BaseModel):

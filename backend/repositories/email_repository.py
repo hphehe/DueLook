@@ -204,7 +204,7 @@ def set_deadline(conn, email_id: str, new_deadline: Optional[str], user_id: str)
             SET extracted_deadline = %s,
                 tab = CASE
                   WHEN tab IN ('MISSED', 'NO_DEADLINE', 'NEEDS_REVIEW') AND %s IS NOT NULL THEN
-                    CASE WHEN %s::timestamptz > NOW() THEN 'FILTERED' ELSE 'MISSED' END
+                    CASE WHEN %s::timestamp > LOCALTIMESTAMP THEN 'FILTERED' ELSE 'MISSED' END
                   ELSE tab
                 END,
                 review_reason = CASE WHEN %s IS NOT NULL THEN NULL ELSE review_reason END
@@ -242,7 +242,7 @@ def confirm(conn, email_id: str, user_id: str) -> bool:
         cur.execute(
             """
             UPDATE email_state
-            SET tab = CASE WHEN ai_deadline > NOW() THEN 'FILTERED' ELSE 'MISSED' END,
+            SET tab = CASE WHEN ai_deadline > LOCALTIMESTAMP THEN 'FILTERED' ELSE 'MISSED' END,
                 extracted_deadline = ai_deadline,
                 review_reason = NULL
             WHERE email_id = %s
@@ -279,7 +279,7 @@ def mark_missed(conn, user_id: str) -> None:
             WHERE user_id = %s
               AND tab = 'FILTERED'
               AND extracted_deadline IS NOT NULL
-              AND extracted_deadline < NOW()
+              AND extracted_deadline < LOCALTIMESTAMP
             """,
             (user_id,),
         )
