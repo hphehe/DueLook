@@ -8,7 +8,6 @@ import {
   isBefore,
   isSameDay,
   isSameMonth,
-  parseISO,
   startOfMonth,
   startOfToday,
   startOfWeek,
@@ -16,6 +15,7 @@ import {
 } from 'date-fns'
 
 import HoverMenu from './HoverMenu'
+import { floatingDateKey } from '../utils'
 import './Calendar.css'
 
 const MONTHS = [
@@ -72,7 +72,8 @@ export default function Calendar({ emails = [], onDateClick, compact = false }) 
   const eventsByDate = emails.reduce((groups, email) => {
     if (!email.extracted_deadline) return groups
     try {
-      const key = format(parseISO(email.extracted_deadline), 'yyyy-MM-dd')
+      const key = floatingDateKey(email.extracted_deadline)
+      if (!key) return groups
       ;(groups[key] ||= []).push(email)
     } catch {
       // One malformed deadline should not break the calendar.

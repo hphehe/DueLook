@@ -1,4 +1,4 @@
-import { formatDate } from '../utils'
+import { formatFloatingDateTime } from '../utils'
 
 const REVIEW_COPY = {
   LOW_CONFIDENCE: {
@@ -30,7 +30,7 @@ const REVIEW_COPY = {
 export default function ReviewSummary({ email }) {
   const copy = REVIEW_COPY[email.review_reason] ?? REVIEW_COPY.LOW_CONFIDENCE
   const suggestion = email.ai_deadline
-    ? `Suggested deadline: ${formatDate(email.ai_deadline)}`
+    ? `Suggested deadline: ${formatFloatingDateTime(email.ai_deadline)}`
     : email.ai_tab === 'NO_DEADLINE'
       ? 'Suggestion: No deadline'
       : null

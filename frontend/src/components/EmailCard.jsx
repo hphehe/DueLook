@@ -1,6 +1,6 @@
 import { TAB_COLORS } from '../constants'
 import './EmailCard.css'
-import { formatDate, senderInitial } from '../utils'
+import { formatFloatingDateTime, senderInitial } from '../utils'
 import ReviewSummary from './ReviewSummary'
 
 export default function EmailCard({
@@ -35,7 +35,7 @@ export default function EmailCard({
         <div className="card-meta">
           <span className="category-badge">{email.category}</span>
           {email.extracted_deadline && (
-            <span className="deadline">Due: {formatDate(email.extracted_deadline)}</span>
+            <span className="deadline">Due: {formatFloatingDateTime(email.extracted_deadline)}</span>
           )}
           {email.tab === 'FILTERED' && (
             <button className="done-btn" onClick={event => stopAndRun(event, onMarkDone)}>

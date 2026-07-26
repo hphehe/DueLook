@@ -1,13 +1,15 @@
-import { parseISO, formatDistanceToNow, isBefore } from 'date-fns'
+import { formatDistance, isBefore } from 'date-fns'
+import { floatingNow, parseFloatingDateTime } from '../utils'
 import styles from './PanicBoard.module.css'
 
 function getCountdownLabel(deadlineIso) {
   if (!deadlineIso) return null
   try {
-    const deadline = parseISO(deadlineIso)
-    const now = new Date()
+    const deadline = parseFloatingDateTime(deadlineIso)
+    if (!deadline) return null
+    const now = floatingNow()
     const isPast = isBefore(deadline, now)
-    const distance = formatDistanceToNow(deadline, { addSuffix: true })
+    const distance = formatDistance(deadline, now, { addSuffix: true })
     return { isPast, distance }
   } catch {
     return null
@@ -22,7 +24,7 @@ export default function PanicBoard({
   onOpenDeadline,
   onContextMenu,
 }) {
-  const now = new Date()
+  const now = floatingNow()
 
   // Separate upcoming deadlines from missed/overdue deadlines
   const upcoming = []
@@ -30,7 +32,8 @@ export default function PanicBoard({
 
   for (const email of emails) {
     try {
-      const deadline = parseISO(email.extracted_deadline)
+      const deadline = parseFloatingDateTime(email.extracted_deadline)
+      if (!deadline) continue
       const isPast = isBefore(deadline, now) || email.tab === 'MISSED'
       if (isPast) {
         missed.push({ email, deadline })
