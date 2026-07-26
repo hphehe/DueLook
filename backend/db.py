@@ -88,13 +88,6 @@ _initialize_schema()
 @contextmanager
 def get_db():
     conn = _pool.getconn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1")
-    except psycopg2.OperationalError:
-        _pool.putconn(conn, close=True)
-        conn = _pool.getconn()
-
     healthy = True
     try:
         yield conn

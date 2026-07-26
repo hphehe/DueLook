@@ -52,6 +52,7 @@ export default function App() {
   const [booting, setBooting]             = useState(true)
   const [activeTab, setActiveTab]         = useState(null)
   const [allEmails, setAllEmails]         = useState([])
+  const [binEmails, setBinEmails]         = useState([])
 
   const [loading, setLoading]             = useState(true)
   const [uploading, setUploading]         = useState(false)
@@ -175,10 +176,22 @@ export default function App() {
   // Calendar and tab data load once per session. Tab switching derives from allEmails on the client.
   useEffect(() => { if (user) loadAll() }, [user])
 
+  useEffect(() => {
+    if (!user || activeTab !== 'BIN') return
+    let current = true
+    fetchEmails('BIN')
+      .then(result => { if (current) setBinEmails(result) })
+      .catch(e => { if (current) setError(e.message) })
+      .finally(() => { if (current) setLoading(false) })
+    return () => { current = false }
+  }, [activeTab, user])
+
   // Active tab email list derived directly from allEmails (instant tab switching, 0ms latency)
-  const emails = activeTab
-    ? allEmails.filter(e => e.tab === activeTab)
-    : allEmails
+  const emails = activeTab === 'BIN'
+    ? binEmails
+    : activeTab
+      ? allEmails.filter(e => e.tab === activeTab)
+      : allEmails
 
 
   // Every non-BIN email that carries a deadline, drawn from the tab-independent set.
@@ -267,6 +280,7 @@ export default function App() {
     setError(null)
     try {
       await recoverEmailApi(emailId)
+      setBinEmails(current => current.filter(email => email.email_id !== emailId))
       await reload()
     } catch (e) {
       setError(e.message)
@@ -319,6 +333,7 @@ export default function App() {
   }
 
   const handleTabClick = (key) => {
+    if (key !== activeTab) setLoading(key === 'BIN')
     setActiveTab(key)
     setUploadMsg(null)
   }
@@ -386,6 +401,7 @@ export default function App() {
     clearToken()
     setUser(null)
     setAllEmails([])
+    setBinEmails([])
 
     setActiveTab(null)
     setError(null)
