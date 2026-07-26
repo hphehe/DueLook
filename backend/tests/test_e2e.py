@@ -2,7 +2,7 @@
 End-to-end API workflow tests.
 
 These tests show full user flow against
-the real database. No steps are mocked except for the Groq LLM.
+the real database. No steps are mocked except for the OpenAI LLM.
 """
 from tests.conftest import cleanup_user
 from tests.helpers import build_eml, unique_email
@@ -173,9 +173,9 @@ class TestRegisterImportAndManage:
                 cleanup_user(user_b_id)
 
 
-class TestRealGroq:
-    def test_real_groq_classifies_email(self, client):
-        """Full pipeline with real Groq key. One test to verify LLM integration."""
+class TestRealOpenAI:
+    def test_real_openai_classifies_email(self, client):
+        """Full pipeline with real OpenAI key. One test to verify LLM integration."""
         email = unique_email()
         user_id = None
         try:

@@ -53,10 +53,25 @@
 .due-calendar__more { padding-left: 0.4rem; color: var(--ui-accent); font-size: 0.68rem; font-weight: 650; line-height: 1.375rem; }
 
 @media (max-width: 720px) {
-  .due-calendar__body { overflow-x: auto; }
-  .due-calendar__weekdays, .due-calendar__grid { min-width: 40rem; }
+  .due-calendar:not(.due-calendar--compact) .due-calendar__body { overflow-x: auto; }
+  .due-calendar:not(.due-calendar--compact) .due-calendar__weekdays,
+  .due-calendar:not(.due-calendar--compact) .due-calendar__grid { min-width: 40rem; }
   .due-calendar__cell { min-height: 6.5rem; }
 }
+
+/* Compact Sidebar Calendar Styling */
+.due-calendar--compact { margin-bottom: 0; }
+.due-calendar--compact .due-calendar__header { min-height: 3rem; padding: 0.4rem 0.6rem; gap: 0.5rem; }
+.due-calendar--compact .due-calendar__arrow { width: 1.85rem; height: 1.85rem; }
+.due-calendar--compact .due-calendar__arrow span { font-size: 1.25rem; }
+.due-calendar--compact .due-calendar__select { min-width: 4.2rem; min-height: 1.85rem; padding: 0.2rem 0.4rem; font-size: 0.82rem; }
+.due-calendar--compact .due-calendar__period > :first-child .due-calendar__select { min-width: 5.8rem; }
+.due-calendar--compact .due-calendar__weekday { padding: 0.35rem 0.2rem; font-size: 0.65rem; text-align: center; }
+.due-calendar--compact .due-calendar__cell { min-height: 3.8rem; padding: 0.3rem 0.2rem; gap: 0.2rem; align-items: center; }
+.due-calendar--compact .due-calendar__date { width: 1.35rem; height: 1.35rem; font-size: 0.75rem; }
+.due-calendar--compact .due-calendar__events { width: 100%; gap: 0.15rem; }
+.due-calendar--compact .due-calendar__event { height: 1.15rem; line-height: 1.15rem; font-size: 0.62rem; padding: 0 0.25rem; text-align: center; }
+.due-calendar--compact .due-calendar__more { font-size: 0.6rem; line-height: 1.1rem; text-align: center; padding-left: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .due-calendar__arrow, .due-calendar__cell, .due-calendar__chevron { transition: none; }

@@ -16,6 +16,8 @@
   --ui-danger-soft: #fff1f0;
   --ui-success: #067647;
   --ui-success-soft: #ecfdf3;
+  --ui-warning: #92400e;
+  --ui-warning-soft: #fff7ed;
   --ui-shadow: 0 18px 38px rgba(15, 23, 42, 0.12), 0 3px 10px rgba(15, 23, 42, 0.06);
 }
 
@@ -38,6 +40,8 @@
   --ui-danger-soft: #3d2028;
   --ui-success: #86efac;
   --ui-success-soft: #153a2b;
+  --ui-warning: #fbbf24;
+  --ui-warning-soft: #3a2a12;
   --ui-shadow: none;
 }
 
@@ -57,10 +61,74 @@ body {
 
 .app {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  max-width: 860px;
+  max-width: 1140px;
   margin: 0 auto;
-  padding: 0 1rem 3rem;
+  padding: 0 1rem;
+}
+
+.app-split {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: stretch;
+  margin-top: 0.5rem;
+  margin-bottom: -1.6rem;
+}
+
+.app-split__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.app-split__stream-frame {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.app-split__stream {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-split__email-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 960px) {
+  .app-split {
+    grid-template-columns: 1fr;
+  }
+
+  .app-split__stream-frame {
+    position: static;
+    order: -1;
+  }
+
+  .app-split__stream {
+    position: static;
+    overflow: visible;
+  }
+
+  .app-split__email-scroll {
+    overflow: visible;
+    padding-right: 0;
+  }
 }
 
 /* Header */

@@ -29,7 +29,9 @@ import DateListModal from './components/DateListModal'
 import Footer from './components/Footer'
 import AccountMenu from './components/AccountMenu'
 import SettingsPanel from './components/SettingsPanel'
-import { format, parseISO } from 'date-fns'
+import PanicBoard from './components/PanicBoard'
+import { format, parseISO, addDays, isBefore } from 'date-fns'
+
 
 function gmailSyncMessage(result, prefix = 'Synced') {
   const changes = []
@@ -50,8 +52,9 @@ export default function App() {
   const [user, setUser]                   = useState(null)
   const [booting, setBooting]             = useState(true)
   const [activeTab, setActiveTab]         = useState(null)
-  const [emails, setEmails]               = useState([])
   const [allEmails, setAllEmails]         = useState([])
+  const [binEmails, setBinEmails]         = useState([])
+
   const [loading, setLoading]             = useState(true)
   const [uploading, setUploading]         = useState(false)
   const [syncing, setSyncing]             = useState(false)
@@ -64,14 +67,25 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(null)
   const [dateModalEmails, setDateModalEmails] = useState([])
   const [settingsOpen, setSettingsOpen]       = useState(false)
+  const [emails, setEmails]                   = useState([])
   const [page, setPage]                       = useState(1)
   const [totalPages, setTotalPages]           = useState(1)
   const [searchQuery, setSearchQuery]         = useState('')
   const [searchResults, setSearchResults]     = useState([])
   const [searching, setSearching]             = useState(false)
   const searchTimer = useRef(null)
+  const [panicDays, setPanicDays]             = useState(() => {
+    const saved = localStorage.getItem('duelook_panic_days')
+    return saved ? Number(saved) : 2
+  })
   const fileRef = useRef()
   const allEmailsCountRef = useRef(0)
+
+  const handlePanicDaysChange = (days) => {
+    setPanicDays(days)
+    localStorage.setItem('duelook_panic_days', String(days))
+  }
+
   useEffect(() => { allEmailsCountRef.current = allEmails.length }, [allEmails.length])
 
   useEffect(() => applyTheme(theme), [theme])
@@ -166,9 +180,6 @@ export default function App() {
     }
   }
 
-  // The calendar reflects ALL deadlines, independent of the active tab. fetchEmails(null)
-  // returns every non-BIN email, so this loads once per session and refreshes only after a
-  // mutation — never on a tab switch, so the calendar stays put as you change folders.
   const loadAll = async () => {
     try {
       const result = await fetchEmails(null, { page: 1, limit: 500 })
@@ -178,16 +189,35 @@ export default function App() {
     }
   }
 
-  //Refresh both the tab list and the calendar after a mutation.
   const reload = () => Promise.all([load(activeTab), loadAll()])
 
-  //List re-fetches on tab change, page change, or once a session is established.
   useEffect(() => { if (user) load(activeTab, page) }, [activeTab, page, user])
-  //Calendar data loads once per session, NOT on tab change.
   useEffect(() => { if (user) loadAll() }, [user])
+
 
   // Every non-BIN email that carries a deadline, drawn from the tab-independent set.
   const deadlineEmails = allEmails.filter(e => e.extracted_deadline && e.tab !== 'BIN')
+
+  // Emails due within the Panic Window (or overdue), excluding DONE and BIN tabs.
+  const panicEmails = allEmails
+    .filter(e => {
+      if (!e.extracted_deadline || e.tab === 'BIN' || e.tab === 'DONE') return false
+      try {
+        const d = parseISO(e.extracted_deadline)
+        const cutoff = addDays(new Date(), panicDays)
+        return isBefore(d, cutoff)
+      } catch {
+        return false
+      }
+    })
+    .sort((a, b) => {
+      try {
+        return parseISO(a.extracted_deadline) - parseISO(b.extracted_deadline)
+      } catch {
+        return 0
+      }
+    })
+
 
   const handleMarkDone = async (emailId) => {
     setError(null)
@@ -251,6 +281,7 @@ export default function App() {
     setError(null)
     try {
       await recoverEmailApi(emailId)
+      setBinEmails(current => current.filter(email => email.email_id !== emailId))
       await reload()
     } catch (e) {
       setError(e.message)
@@ -303,6 +334,7 @@ export default function App() {
   }
 
   const handleTabClick = (key) => {
+    if (key !== activeTab) setLoading(key === 'BIN')
     setActiveTab(key)
     setPage(1)
     setUploadMsg(null)
@@ -331,6 +363,7 @@ export default function App() {
     setError(null)
     try {
       const result = await syncGmail()
+      localStorage.setItem('duelook_last_sync', String(Date.now()))
       setUploadMsg(gmailSyncMessage(result))
       if (result.imported + (result.updated ?? 0) > 0) await reload()
     } catch (e) {
@@ -341,9 +374,14 @@ export default function App() {
   }
 
   const silentSync = async () => {
+    const lastSync = Number(localStorage.getItem('duelook_last_sync') || 0)
+    const now = Date.now()
+    if (now - lastSync < 5 * 60 * 1000) return // Skip auto-sync if synced in the last 5 minutes
+
     setSyncing(true)
     try {
       const result = await syncGmail()
+      localStorage.setItem('duelook_last_sync', String(now))
       if (result.imported + (result.updated ?? 0) > 0) {
         setUploadMsg(gmailSyncMessage(result, 'Auto-synced'))
         await reload()
@@ -354,6 +392,7 @@ export default function App() {
       setSyncing(false)
     }
   }
+
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
@@ -380,8 +419,9 @@ export default function App() {
   const handleLogout = () => {
     clearToken()
     setUser(null)
-    setEmails([])
     setAllEmails([])
+    setBinEmails([])
+
     setActiveTab(null)
     setError(null)
     setUploadMsg(null)
@@ -447,105 +487,127 @@ export default function App() {
           statusMessage={uploadMsg}
           error={error}
           theme={theme}
+          panicDays={panicDays}
           onBack={() => setSettingsOpen(false)}
           onSyncGmail={handleSyncGmail}
           onThemeChange={setTheme}
+          onPanicDaysChange={handlePanicDaysChange}
         />
       ) : (
-        <>
-      <Toolbar
-        activeTab={activeTab}
-        onTabClick={handleTabClick}
-        uploading={uploading}
-        fileRef={fileRef}
-        onFileChange={handleFileChange}
-        syncing={syncing}
-        onSyncGmail={handleSyncGmail}
-        hasGmail={user?.has_gmail ?? false}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-      />
-
-      {uploadMsg && <div className="banner success">{uploadMsg}</div>}
-      {error     && <div className="banner error">{error}</div>}
-
-      {allEmails.length > 0 && (
-        <Calendar
-          emails={deadlineEmails}
-          onDateClick={(date) => {
-            setSelectedDate(date)
-            const key = format(date, 'yyyy-MM-dd')
-            const matched = deadlineEmails.filter(e => {
-              if (!e.extracted_deadline) return false
-              try {
-                const d = parseISO(e.extracted_deadline)
-                const ek = format(d, 'yyyy-MM-dd')
-                return ek === key
-              } catch (err) {
-                return (e.extracted_deadline || '').startsWith(key)
-              }
-            })
-            setDateModalEmails(matched)
-          }}
-        />
-      )}
-
-      {searchQuery.trim() ? (
-        searching ? (
-          <div className="empty">Searching…</div>
-        ) : searchResults.length === 0 ? (
-          <div className="empty">No emails match "{searchQuery}".</div>
-        ) : (
-          <ul className="email-list">
-            {searchResults.map(e => (
-              <EmailCard
-                key={e.email_id}
-                email={e}
-                onClick={() => setSelectedEmail(e)}
-                onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
-                onMarkDone={() => handleMarkDone(e.email_id)}
-                onConfirm={() => handleConfirm(e.email_id)}
-                onDismiss={() => handleDismiss(e.email_id)}
-                onRecover={() => handleRecover(e.email_id)}
+        <div className="app-split">
+          <aside className="app-split__sidebar">
+            {allEmails.length > 0 && (
+              <Calendar
+                compact
+                emails={deadlineEmails}
+                onDateClick={(date) => {
+                  setSelectedDate(date)
+                  const key = format(date, 'yyyy-MM-dd')
+                  const matched = deadlineEmails.filter(e => {
+                    if (!e.extracted_deadline) return false
+                    try {
+                      const d = parseISO(e.extracted_deadline)
+                      const ek = format(d, 'yyyy-MM-dd')
+                      return ek === key
+                    } catch (err) {
+                      return (e.extracted_deadline || '').startsWith(key)
+                    }
+                  })
+                  setDateModalEmails(matched)
+                }}
               />
-            ))}
-          </ul>
-        )
-      ) : loading ? (
-        <div className="empty">Loading…</div>
-      ) : emails.length === 0 ? (
-        <div className="empty">No emails here yet. Import a .eml file to get started.</div>
-      ) : (
-        <ul className="email-list">
-          {emails.map(e => (
-            <EmailCard
-              key={e.email_id}
-              email={e}
-              onClick={() => setSelectedEmail(e)}
-              onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
-              onMarkDone={() => handleMarkDone(e.email_id)}
-              onConfirm={() => handleConfirm(e.email_id)}
-              onDismiss={() => handleDismiss(e.email_id)}
-              onOpenDeadline={() => handleOpenDeadline(e)}
-              onRecover={() => handleRecover(e.email_id)}
-            />
-          ))}
-        </ul>
-      )}
+            )}
 
-      {!searchQuery.trim() && emails.length > 0 && (
-        <div className="pagination">
-          <button
-            className="page-btn"
-            onClick={() => setPage(p => p - 1)}
-            disabled={page === 1}
-          >← Prev</button>
-          <span className="page-info">Page {page} of {totalPages}</span>
-          <button
-            className="page-btn"
-            onClick={() => setPage(p => p + 1)}
-            disabled={page === totalPages}
-          >Next →</button>
+            <PanicBoard
+              emails={panicEmails}
+              panicDays={panicDays}
+              onEmailClick={setSelectedEmail}
+              onMarkDone={handleMarkDone}
+              onOpenDeadline={handleOpenDeadline}
+              onContextMenu={handleContextMenu}
+            />
+          </aside>
+
+          <section className="app-split__stream-frame" aria-label="Email inbox">
+            <div className="app-split__stream">
+              <Toolbar
+                activeTab={activeTab}
+                onTabClick={handleTabClick}
+                uploading={uploading}
+                fileRef={fileRef}
+                onFileChange={handleFileChange}
+                syncing={syncing}
+                onSyncGmail={handleSyncGmail}
+                hasGmail={user?.has_gmail ?? false}
+                searchQuery={searchQuery}
+                onSearchChange={handleSearchChange}
+              />
+
+              {uploadMsg && <div className="banner success">{uploadMsg}</div>}
+              {error     && <div className="banner error">{error}</div>}
+
+              <div className="app-split__email-scroll">
+                {searchQuery.trim() ? (
+                  searching ? (
+                    <div className="empty">Searching…</div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="empty">No emails match "{searchQuery}".</div>
+                  ) : (
+                    <ul className="email-list">
+                      {searchResults.map(e => (
+                        <EmailCard
+                          key={e.email_id}
+                          email={e}
+                          onClick={() => setSelectedEmail(e)}
+                          onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
+                          onMarkDone={() => handleMarkDone(e.email_id)}
+                          onConfirm={() => handleConfirm(e.email_id)}
+                          onDismiss={() => handleDismiss(e.email_id)}
+                          onRecover={() => handleRecover(e.email_id)}
+                        />
+                      ))}
+                    </ul>
+                  )
+                ) : loading ? (
+                  <div className="empty">Loading…</div>
+                ) : emails.length === 0 ? (
+                  <div className="empty">No emails here yet. Import a .eml file to get started.</div>
+                ) : (
+                  <ul className="email-list">
+                    {emails.map(e => (
+                      <EmailCard
+                        key={e.email_id}
+                        email={e}
+                        onClick={() => setSelectedEmail(e)}
+                        onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
+                        onMarkDone={() => handleMarkDone(e.email_id)}
+                        onConfirm={() => handleConfirm(e.email_id)}
+                        onDismiss={() => handleDismiss(e.email_id)}
+                        onOpenDeadline={() => handleOpenDeadline(e)}
+                        onRecover={() => handleRecover(e.email_id)}
+                      />
+                    ))}
+                  </ul>
+                )}
+
+                {!searchQuery.trim() && (
+                  <div className="pagination">
+                    <button
+                      className="page-btn"
+                      onClick={() => setPage(p => p - 1)}
+                      disabled={page === 1}
+                    >← Prev</button>
+                    <span className="page-info">Page {page} of {totalPages}</span>
+                    <button
+                      className="page-btn"
+                      onClick={() => setPage(p => p + 1)}
+                      disabled={page === totalPages}
+                    >Next →</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
       )}
 
@@ -588,8 +650,6 @@ export default function App() {
           onDismiss={() => handleDismiss(selectedEmail.email_id)}
           onOpenDeadline={() => handleOpenDeadline(selectedEmail)}
         />
-      )}
-        </>
       )}
     </div>
     <Footer />

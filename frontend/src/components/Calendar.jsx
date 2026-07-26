@@ -62,7 +62,7 @@ function CalendarDropdown({ label, value, options, onChange, width }) {
   )
 }
 
-export default function Calendar({ emails = [], onDateClick }) {
+export default function Calendar({ emails = [], onDateClick, compact = false }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const monthStart = startOfMonth(currentMonth)
   const displayedMonth = currentMonth.getMonth()
@@ -96,7 +96,8 @@ export default function Calendar({ emails = [], onDateClick }) {
   })
 
   return (
-    <section className="due-calendar" aria-label={`${MONTHS[displayedMonth]} ${displayedYear} deadlines`}>
+    <section className={`due-calendar${compact ? ' due-calendar--compact' : ''}`} aria-label={`${MONTHS[displayedMonth]} ${displayedYear} deadlines`}>
+
       <header className="due-calendar__header">
         <div className="due-calendar__navigation" aria-label="Calendar navigation">
           <button
