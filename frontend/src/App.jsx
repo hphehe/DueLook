@@ -16,7 +16,7 @@ import {
   saveToken,
   syncGmail,
 } from './api'
-import { toDateTimeLocal } from './utils'
+import { floatingDateKey, floatingNow, parseFloatingDateTime, toDateTimeLocal } from './utils'
 import { applyTheme, getInitialTheme } from './theme'
 import AuthForm from './components/AuthForm'
 import Toolbar from './components/Toolbar'
@@ -30,7 +30,7 @@ import Footer from './components/Footer'
 import AccountMenu from './components/AccountMenu'
 import SettingsPanel from './components/SettingsPanel'
 import PanicBoard from './components/PanicBoard'
-import { format, parseISO, addDays, isBefore } from 'date-fns'
+import { format, addDays, isBefore } from 'date-fns'
 
 
 function gmailSyncMessage(result, prefix = 'Synced') {
@@ -203,19 +203,18 @@ export default function App() {
     .filter(e => {
       if (!e.extracted_deadline || e.tab === 'BIN' || e.tab === 'DONE') return false
       try {
-        const d = parseISO(e.extracted_deadline)
-        const cutoff = addDays(new Date(), panicDays)
+        const d = parseFloatingDateTime(e.extracted_deadline)
+        if (!d) return false
+        const cutoff = addDays(floatingNow(), panicDays)
         return isBefore(d, cutoff)
       } catch {
         return false
       }
     })
     .sort((a, b) => {
-      try {
-        return parseISO(a.extracted_deadline) - parseISO(b.extracted_deadline)
-      } catch {
-        return 0
-      }
+      const left = parseFloatingDateTime(a.extracted_deadline)
+      const right = parseFloatingDateTime(b.extracted_deadline)
+      return left && right ? left - right : 0
     })
 
 
@@ -297,23 +296,10 @@ export default function App() {
 
   const handleSaveDeadline = async () => {
     const email = deadlineModal.email
-    // Convert `datetime-local` (YYYY-MM-DDTHH:MM) in local time to an ISO instant (UTC)
-    let deadline = null
-    if (deadlineValue) {
-      try {
-        const [datePart, timePart] = deadlineValue.split('T')
-        if (datePart && timePart) {
-          const [y, m, d] = datePart.split('-').map(Number)
-          const [hh, mm] = timePart.split(':').map(Number)
-          const dt = new Date(y, m - 1, d, hh, mm)
-          deadline = dt.toISOString()
-        } else {
-          deadline = deadlineValue
-        }
-      } catch (err) {
-        deadline = deadlineValue
-      }
-    }
+    // Preserve the entered wall-clock fields; deadlines never carry a timezone.
+    const deadline = deadlineValue
+      ? `${deadlineValue}${deadlineValue.length === 16 ? ':00' : ''}`
+      : null
     setDeadlineModal(null)
     setError(null)
     try {
@@ -505,13 +491,7 @@ export default function App() {
                   const key = format(date, 'yyyy-MM-dd')
                   const matched = deadlineEmails.filter(e => {
                     if (!e.extracted_deadline) return false
-                    try {
-                      const d = parseISO(e.extracted_deadline)
-                      const ek = format(d, 'yyyy-MM-dd')
-                      return ek === key
-                    } catch (err) {
-                      return (e.extracted_deadline || '').startsWith(key)
-                    }
+                    return floatingDateKey(e.extracted_deadline) === key
                   })
                   setDateModalEmails(matched)
                 }}

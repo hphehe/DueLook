@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './EmailModal.css'
 import { TAB_COLORS } from '../constants'
-import { formatDate } from '../utils'
+import { formatDate, formatFloatingDateTime } from '../utils'
 import EmailBody from './EmailBody'
 import ReviewSummary from './ReviewSummary'
 
@@ -72,7 +72,7 @@ export default function EmailModal({
           <span>From: {email.sender}</span>
           <span>Received: {formatDate(email.received_date)}</span>
           {email.extracted_deadline && (
-            <span className="deadline">Due: {formatDate(email.extracted_deadline)}</span>
+            <span className="deadline">Due: {formatFloatingDateTime(email.extracted_deadline)}</span>
           )}
         </div>
         {email.tab === 'NEEDS_REVIEW' && <ReviewSummary email={email} />}

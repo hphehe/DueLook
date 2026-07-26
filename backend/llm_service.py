@@ -43,6 +43,8 @@ Deadline rules:
 - extracted_deadline must be null for NEEDS_REVIEW and NO_DEADLINE.
 - Never invent a time that is not stated or clearly inferable; use 23:59 when only a date is given.
 - Multiple time references do not automatically mean NEEDS_REVIEW. Use it only when they are genuinely conflicting deadlines for the same required action.
+- Preserve the wall-clock date and time exactly as written in the email. Ignore timezone names and UTC offsets; never convert the hour.
+- Return deadlines as timezone-free ISO 8601 values such as 2026-07-15T17:00:00, with no Z or offset suffix.
 
 Confidence rules:
 - confidence is your certainty from 0 to 1 that both the chosen tab and extracted deadline are correct.

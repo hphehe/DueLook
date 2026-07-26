@@ -41,7 +41,7 @@ def _initialize_schema():
                     source_file TEXT NOT NULL,
                     category TEXT NOT NULL,
                     tab TEXT NOT NULL,
-                    extracted_deadline TIMESTAMPTZ,
+                    extracted_deadline TIMESTAMP WITHOUT TIME ZONE,
                     pre_delete_tab TEXT,
                     processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 );
@@ -97,7 +97,7 @@ def get_db():
         try:
             conn.rollback()
         except Exception:
-            pass
+            healthy = False
         raise
     finally:
         _pool.putconn(conn, close=not healthy)

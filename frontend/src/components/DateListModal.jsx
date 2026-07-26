@@ -1,6 +1,7 @@
 import React from 'react'
 import './DateListModal.css'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
+import { formatFloatingDateTime } from '../utils'
 
 export default function DateListModal({ open, date, emails = [], onClose, onEmailClick }) {
   if (!open) return null
@@ -23,7 +24,7 @@ export default function DateListModal({ open, date, emails = [], onClose, onEmai
                   <div className="date-email-subject" onClick={() => onEmailClick?.(e)}>
                     {e.subject || '(no subject)'}
                   </div>
-                  <div className="date-email-meta">{e.from_name || e.from || ''} • {e.extracted_deadline ? format(parseISO(e.extracted_deadline), 'dd MMM yyyy, p') : ''}</div>
+                  <div className="date-email-meta">{e.from_name || e.from || ''} • {e.extracted_deadline ? formatFloatingDateTime(e.extracted_deadline) : ''}</div>
                 </li>
               ))}
             </ul>
