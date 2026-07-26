@@ -1,4 +1,15 @@
+import HoverMenu from './HoverMenu'
 import styles from './SettingsPanel.module.css'
+
+const PANIC_OPTIONS = [
+  { label: '1 Day', value: 1 },
+  { label: '2 Days', value: 2 },
+  { label: '3 Days', value: 3 },
+  { label: '5 Days', value: 5 },
+  { label: '7 Days', value: 7 },
+  { label: '10 Days', value: 10 },
+  { label: '14 Days', value: 14 },
+]
 
 export default function SettingsPanel({
   user,
@@ -6,12 +17,15 @@ export default function SettingsPanel({
   statusMessage,
   error,
   theme,
+  panicDays = 2,
   onBack,
   onSyncGmail,
   onThemeChange,
+  onPanicDaysChange,
 }) {
   const hasGmail = user.has_gmail ?? false
   const darkMode = theme === 'dark'
+  const selectedPanicOption = PANIC_OPTIONS.find(o => o.value === panicDays) || PANIC_OPTIONS[1]
 
   return (
     <main className={styles.settings} aria-labelledby="settings-title">
@@ -43,6 +57,42 @@ export default function SettingsPanel({
         >
           <span aria-hidden="true" />
         </button>
+      </section>
+
+      <section className={`${styles.section} ${styles.preference}`}>
+        <div>
+          <h3>Panic Window</h3>
+          <p>Tasks with deadlines within this timeframe appear on the Panic Board.</p>
+        </div>
+        <HoverMenu
+          label={`Panic Window: ${selectedPanicOption.label}`}
+          align="right"
+          triggerClassName={styles.panicTrigger}
+          panelClassName={styles.panicDropdown}
+          trigger={(
+            <>
+              <span>{selectedPanicOption.label}</span>
+              <span className={styles.chevron} aria-hidden="true">&#9662;</span>
+            </>
+          )}
+        >
+          {close => PANIC_OPTIONS.map(option => (
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={option.value === panicDays}
+              className={styles.panicOption}
+              key={option.value}
+              onClick={() => {
+                onPanicDaysChange?.(option.value)
+                close()
+              }}
+            >
+              <span>{option.label}</span>
+              {option.value === panicDays && <span aria-hidden="true">&#10003;</span>}
+            </button>
+          ))}
+        </HoverMenu>
       </section>
 
       <section className={styles.section} aria-labelledby="account-heading">
