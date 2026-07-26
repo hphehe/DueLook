@@ -51,15 +51,18 @@ export default function PanicBoard({
   const displayEmails = [...upcoming.map(item => item.email), ...missed.map(item => item.email)].slice(0, 8)
 
   return (
-    <section className={styles.panicBoard} aria-label="Panic Board">
+    <section className={styles.panicBoard} aria-labelledby="panic-board-title">
       <header className={styles.header}>
         <div className={styles.titleGroup}>
-          <h2 className={styles.title}>Panic Board</h2>
+          <h2 id="panic-board-title" className={styles.title}>Panic Board</h2>
           <span className={styles.windowBadge}>
             Next {panicDays} {panicDays === 1 ? 'day' : 'days'}
           </span>
         </div>
-        <span className={`${styles.countBadge} ${displayEmails.length > 0 ? styles.countActive : ''}`}>
+        <span
+          className={`${styles.countBadge} ${displayEmails.length > 0 ? styles.countActive : ''}`}
+          aria-live="polite"
+        >
           {displayEmails.length} {displayEmails.length === 1 ? 'task' : 'tasks'}
         </span>
       </header>
@@ -81,34 +84,41 @@ export default function PanicBoard({
               <li
                 key={email.email_id}
                 className={`${styles.card} ${isOverdue ? styles.overdueCard : ''}`}
-                onClick={() => onEmailClick?.(email)}
                 onContextMenu={ev => onContextMenu?.(ev, email)}
               >
-                <div className={styles.cardMain}>
-                  <div className={styles.cardHeader}>
-                    <span className={styles.subject} title={email.subject || '(No subject)'}>
-                      {email.subject || '(No subject)'}
-                    </span>
-                    {countdown && (
-                      <span className={`${styles.countdown} ${isOverdue ? styles.overdueBadge : styles.urgentBadge}`}>
-                        {isOverdue ? 'Overdue ' : 'Due '}{countdown.distance.replace('about ', '')}
+                <button
+                  type="button"
+                  className={styles.cardOpen}
+                  aria-label={`Open email: ${email.subject || 'No subject'}`}
+                  onClick={() => onEmailClick?.(email)}
+                >
+                  <div className={styles.cardMain}>
+                    <div className={styles.cardHeader}>
+                      <span className={styles.subject} title={email.subject || '(No subject)'}>
+                        {email.subject || '(No subject)'}
                       </span>
-                    )}
-                  </div>
+                      {countdown && (
+                        <span className={`${styles.countdown} ${isOverdue ? styles.overdueBadge : styles.urgentBadge}`}>
+                          {isOverdue ? 'Overdue ' : 'Due '}{countdown.distance.replace('about ', '')}
+                        </span>
+                      )}
+                    </div>
 
-                  <div className={styles.cardMeta}>
-                    <span className={styles.sender}>{email.sender || 'Unknown'}</span>
-                    {email.category && (
-                      <span className={styles.category}>{email.category}</span>
-                    )}
+                    <div className={styles.cardMeta}>
+                      <span className={styles.sender}>{email.sender || 'Unknown'}</span>
+                      {email.category && (
+                        <span className={styles.category}>{email.category}</span>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </button>
 
                 <div className={styles.cardActions}>
                   <button
                     type="button"
                     className={styles.actionButton}
                     title="Mark Done"
+                    aria-label={`Mark ${email.subject || 'email'} done`}
                     onClick={ev => {
                       ev.stopPropagation()
                       onMarkDone?.(email.email_id)
@@ -120,6 +130,7 @@ export default function PanicBoard({
                     type="button"
                     className={`${styles.actionButton} ${styles.actionSecondary}`}
                     title="Set Deadline"
+                    aria-label={`Edit deadline for ${email.subject || 'email'}`}
                     onClick={ev => {
                       ev.stopPropagation()
                       onOpenDeadline?.(email)

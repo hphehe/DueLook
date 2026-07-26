@@ -493,42 +493,46 @@ export default function App() {
             />
           </aside>
 
-          <section className="app-split__stream">
-            <Toolbar
-              activeTab={activeTab}
-              onTabClick={handleTabClick}
-              uploading={uploading}
-              fileRef={fileRef}
-              onFileChange={handleFileChange}
-              syncing={syncing}
-              onSyncGmail={handleSyncGmail}
-              hasGmail={user?.has_gmail ?? false}
-            />
+          <section className="app-split__stream-frame" aria-label="Email inbox">
+            <div className="app-split__stream">
+              <Toolbar
+                activeTab={activeTab}
+                onTabClick={handleTabClick}
+                uploading={uploading}
+                fileRef={fileRef}
+                onFileChange={handleFileChange}
+                syncing={syncing}
+                onSyncGmail={handleSyncGmail}
+                hasGmail={user?.has_gmail ?? false}
+              />
 
-            {uploadMsg && <div className="banner success">{uploadMsg}</div>}
-            {error     && <div className="banner error">{error}</div>}
+              {uploadMsg && <div className="banner success">{uploadMsg}</div>}
+              {error     && <div className="banner error">{error}</div>}
 
-            {loading ? (
-              <div className="empty">Loading…</div>
-            ) : emails.length === 0 ? (
-              <div className="empty">No emails here yet. Import a .eml file to get started.</div>
-            ) : (
-              <ul className="email-list">
-                {emails.map(e => (
-                  <EmailCard
-                    key={e.email_id}
-                    email={e}
-                    onClick={() => setSelectedEmail(e)}
-                    onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
-                    onMarkDone={() => handleMarkDone(e.email_id)}
-                    onConfirm={() => handleConfirm(e.email_id)}
-                    onDismiss={() => handleDismiss(e.email_id)}
-                    onOpenDeadline={() => handleOpenDeadline(e)}
-                    onRecover={() => handleRecover(e.email_id)}
-                  />
-                ))}
-              </ul>
-            )}
+              <div className="app-split__email-scroll">
+                {loading ? (
+                  <div className="empty">Loading…</div>
+                ) : emails.length === 0 ? (
+                  <div className="empty">No emails here yet. Import a .eml file to get started.</div>
+                ) : (
+                  <ul className="email-list">
+                    {emails.map(e => (
+                      <EmailCard
+                        key={e.email_id}
+                        email={e}
+                        onClick={() => setSelectedEmail(e)}
+                        onContextMenu={ev => e.tab !== 'BIN' ? handleContextMenu(ev, e) : ev.preventDefault()}
+                        onMarkDone={() => handleMarkDone(e.email_id)}
+                        onConfirm={() => handleConfirm(e.email_id)}
+                        onDismiss={() => handleDismiss(e.email_id)}
+                        onOpenDeadline={() => handleOpenDeadline(e)}
+                        onRecover={() => handleRecover(e.email_id)}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </section>
         </div>
       )}
@@ -578,4 +582,3 @@ export default function App() {
     </>
   )
 }
-
